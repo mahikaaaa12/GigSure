@@ -174,16 +174,20 @@
 </div>
 
 <script>
-  const API = "http://127.0.0.1:8000/api";
+  const API = "";  // relative — works on any host
   let currentTab = 'login';
   let currentRole = 'insurer';
 
   // Always clear any existing session when the login page loads
   // so the user must authenticate fresh every time
-  window.addEventListener('DOMContentLoaded', () => {
-    localStorage.removeItem('gigsure_token');
-    localStorage.removeItem('gigsure_user');
-  });
+  window.addEventListener("DOMContentLoaded", () => {
+  const existingUser = localStorage.getItem("gigsure_user");
+
+  // Allow manual login page access using ?force=true
+  if (existingUser && !window.location.search.includes("force=true")) {
+    window.location.href = "/dashboard/";
+  }
+});
 
   // ── Tab / role ──────────────────────────────────────────────
   function switchTab(tab) {
@@ -277,28 +281,35 @@
 
     setBtn('login-btn', true, 'Signing in…');
     try {
-      const res = await fetch(`${API}/login`, {
+      const res = await fetch('/api/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role: currentRole })
+        body: JSON.stringify({ email, password, role: currentRole }),
+        credentials: 'same-origin',
       });
+
+      // Guard: if response is not JSON (e.g. Django redirect HTML), surface a clear error
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Non-JSON response from server');
+      }
+
       const data = await res.json();
 
       if (data.success) {
-        const authToken = data.token;
-        localStorage.setItem('gigsure_token', authToken);
+        // Store user (with role) in localStorage for frontend role-gating
         localStorage.setItem('gigsure_user', JSON.stringify(data.user));
         setBtn('login-btn', false, '✓ Welcome back!');
         setTimeout(() => window.location.href = '/dashboard/', 600);
       } else {
         setBtn('login-btn', false, 'Sign In');
         if (data.errors?.general) showAlert('login-alert', 'error', data.errors.general);
-        else if (data.errors?.role) showAlert('login-alert', 'error', data.errors.role);
+        else if (data.errors?.role)  showAlert('login-alert', 'error', data.errors.role);
         else showFieldErrors(data.errors || {});
       }
     } catch (e) {
       setBtn('login-btn', false, 'Sign In');
-      showAlert('login-alert', 'error', 'Cannot reach server. Is the backend running?');
+      showAlert('login-alert', 'error', 'Cannot connect to the server. Make sure the Django backend is running on port 8000.');
     }
   }
 
@@ -328,19 +339,24 @@
 
     setBtn('signup-btn', true, 'Creating account…');
     try {
-      const res = await fetch(`${API}/signup`, {
+      const res = await fetch('/api/signup/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'same-origin',
       });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Non-JSON response from server');
+      }
+
       const data = await res.json();
 
       if (data.success) {
-        const authToken = data.token;
-        localStorage.setItem('gigsure_token', authToken);
         localStorage.setItem('gigsure_user', JSON.stringify(data.user));
         setBtn('signup-btn', false, '✓ Account created!');
-        setTimeout(() => window.location.href = 'index.html', 600);
+        setTimeout(() => window.location.href = '/dashboard/', 600);
       } else {
         setBtn('signup-btn', false, 'Create Account');
         showFieldErrors(data.errors || {});
@@ -348,7 +364,7 @@
       }
     } catch (e) {
       setBtn('signup-btn', false, 'Create Account');
-      showAlert('signup-alert', 'error', 'Cannot reach server. Is the backend running?');
+      showAlert('signup-alert', 'error', 'Cannot connect to the server. Make sure the Django backend is running on port 8000.');
     }
   }
 
@@ -377,13 +393,11 @@
   async function logout() {
     const authToken = localStorage.getItem('gigsure_token');
     try {
-      await fetch(`${API}/logout`, {
+      await fetch('/api/logout/', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
     } catch {}
-    localStorage.removeItem('gigsure_token');
-    localStorage.removeItem('gigsure_user');
     document.getElementById('dashboard').classList.remove('active');
     setBtn('login-btn', false, 'Sign In');
     setBtn('signup-btn', false, 'Create Account');

@@ -21,7 +21,7 @@
 
 <!-- Nav -->
 <nav>
-  <a href="#" class="nav-logo">
+  <a href="/dashboard/" class="nav-logo">
     <div class="nav-logo-icon">🛡️</div>
     <span class="nav-logo-text">GigSure</span>
   </a>
@@ -30,8 +30,20 @@
     <li><a href="#features">Features</a></li>
     <li><a href="#pricing">Pricing</a></li>
     <li><a href="#testimonials">Stories</a></li>
-    <li><a href="#" class="nav-cta">Get protected →</a></li>
+    <li><a href="/weather/" target="_blank" id="nav-weather-link" style="display:inline-flex;align-items:center;gap:5px;">🌦️ Weather</a></li>
+    <li id="nav-claim-li"><a href="/claim/" target="_blank" class="nav-cta" id="nav-claim-link">File a claim →</a></li>
   </ul>
+  <!-- User pill (shown when logged in) -->
+  <div id="user-pill" style="display:none; align-items:center; gap:10px;">
+    <div id="user-avatar" style="width:34px;height:34px;border-radius:50%;background:#1a6b3a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#6bdd9a;font-family:'Geist Mono',monospace;flex-shrink:0;"></div>
+    <div style="line-height:1.3;">
+      <div id="user-name" style="font-size:13px;font-weight:600;color:#f0f4f1;"></div>
+      <div id="user-role-tag" style="font-size:11px;"></div>
+    </div>
+    <button onclick="doLogout()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(240,244,241,0.5);font-family:'Geist',sans-serif;font-size:12px;padding:5px 12px;border-radius:20px;cursor:pointer;transition:all 0.2s;margin-left:4px;" onmouseover="this.style.borderColor='rgba(224,82,82,0.4)';this.style.color='#e05252'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='rgba(240,244,241,0.5)'">Sign out</button>
+  </div>
+  <!-- Login button (shown when logged out) -->
+<a href="/login/?force=true" id="login-nav-btn" class="nav-cta">Sign in →</a>
 </nav>
 
 <!-- Hero -->
@@ -85,7 +97,7 @@
               <div class="m-alert-title">Heavy rainfall detected in your zone</div>
               <div class="m-alert-sub">Demand dropped 68% — you may be eligible</div>
             </div>
-            <button class="m-alert-btn">File claim</button>
+            <button class="m-alert-btn" onclick="window.open('/claim/','_blank')">File claim</button>
           </div>
           <div class="m-stats">
             <div class="m-stat g">
@@ -437,6 +449,64 @@
   </div>
 </section>
 
+<!-- Modules -->
+<section style="padding: 80px 40px; max-width: 1100px; margin: 0 auto;">
+  <div style="text-align:center; margin-bottom: 48px;">
+    <div class="section-eyebrow" style="justify-content:center;">Quick access</div>
+    <h2 class="section-title">Tools built for<br>your daily grind.</h2>
+  </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; max-width:780px; margin:0 auto;" class="reveal">
+
+    <!-- Claim Module Card (Beneficiary only) -->
+    <div id="claim-module-wrap" style="position:relative;">
+      <a href="/claim/" target="_blank" id="claim-module-link" style="text-decoration:none; display:block;">
+        <div id="claim-card-inner" style="background:#111a14; border:1px solid rgba(255,255,255,0.07); border-radius:18px; padding:36px 32px; cursor:pointer; transition: border-color 0.25s, transform 0.2s, box-shadow 0.25s; position:relative; overflow:hidden;"
+          onmouseover="if(!this.dataset.locked)this.style.borderColor='rgba(107,221,154,0.4)',this.style.transform='translateY(-4px)',this.style.boxShadow='0 16px 40px rgba(0,0,0,0.3)'"
+          onmouseout="this.style.borderColor=this.dataset.locked?'rgba(255,255,255,0.07)':'rgba(255,255,255,0.07)',this.style.transform='translateY(0)',this.style.boxShadow='none'">
+          <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle,rgba(107,221,154,0.08) 0%,transparent 70%);pointer-events:none;"></div>
+          <div style="font-size:40px; margin-bottom:20px;">📋</div>
+          <div style="font-family:'Geist Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(107,221,154,1); margin-bottom:10px;">Claim request</div>
+          <div style="font-family:'Instrument Serif',Georgia,serif; font-size:26px; line-height:1.15; letter-spacing:-0.5px; color:#f0f4f1; margin-bottom:12px;">File your income<br>protection claim</div>
+          <p style="font-size:13px; color:rgba(240,244,241,0.45); line-height:1.6; margin-bottom:24px;">Submit a disruption claim in under 2 minutes. Auto-filled with AI-detected event data. Payout in &lt;60 seconds.</p>
+          <div style="display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:600;" id="claim-card-cta"><span style="color:#6bdd9a;">Open module</span> <span style="color:#6bdd9a;">→</span></div>
+        </div>
+      </a>
+      <!-- Lock overlay for Insurers / logged-out users -->
+      <div id="claim-lock-overlay" style="display:none; position:absolute; inset:0; border-radius:18px; background:rgba(10,15,13,0.88); backdrop-filter:blur(6px); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:28px; gap:12px;">
+        <div style="font-size:36px;">🔒</div>
+        <div style="font-size:15px; font-weight:700; color:#f0f4f1;" id="claim-lock-title">Beneficiary only</div>
+        <div style="font-size:13px; color:rgba(240,244,241,0.5); line-height:1.6;" id="claim-lock-sub">This module is only available to Beneficiary (gig worker) accounts. Sign in as a Beneficiary to file a claim.</div>
+        <a href="/login/" style="margin-top:8px; padding:11px 22px; background:#6bdd9a; color:#0a0f0d; border-radius:10px; text-decoration:none; font-size:13px; font-weight:700;">Sign in as Beneficiary →</a>
+      </div>
+    </div>
+
+    <!-- Weather Module Card (All roles) -->
+    <div id="weather-module-wrap" style="position:relative;">
+      <a href="/weather/" target="_blank" id="weather-module-link" style="text-decoration:none; display:block;">
+        <div style="background:#111a14; border:1px solid rgba(255,255,255,0.07); border-radius:18px; padding:36px 32px; cursor:pointer; transition: border-color 0.25s, transform 0.2s, box-shadow 0.25s; position:relative; overflow:hidden;"
+          onmouseover="this.style.borderColor='rgba(107,221,154,0.4)';this.style.transform='translateY(-4px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.3)'"
+          onmouseout="this.style.borderColor='rgba(255,255,255,0.07)';this.style.transform='translateY(0)';this.style.boxShadow='none'">
+          <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle,rgba(96,165,250,0.08) 0%,transparent 70%);pointer-events:none;"></div>
+          <div style="font-size:40px; margin-bottom:20px;">🌦️</div>
+          <div style="font-family:'Geist Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(107,221,154,1); margin-bottom:10px;">Weather forecast</div>
+          <div id="weather-role-badge" style="display:none; margin-bottom:8px;"></div>
+          <div style="font-family:'Instrument Serif',Georgia,serif; font-size:26px; line-height:1.15; letter-spacing:-0.5px; color:#f0f4f1; margin-bottom:12px;">Know before<br>you ride</div>
+          <p style="font-size:13px; color:rgba(240,244,241,0.45); line-height:1.6; margin-bottom:24px;">Live weather + 5-day disruption risk for your zone. Predict income impact before your shift even starts.</p>
+          <div style="display:inline-flex; align-items:center; gap:8px; color:#6bdd9a; font-size:13px; font-weight:600;">Open module <span>→</span></div>
+        </div>
+      </a>
+      <!-- Lock overlay for logged-out users -->
+      <div id="weather-lock-overlay" style="display:none; position:absolute; inset:0; border-radius:18px; background:rgba(10,15,13,0.88); backdrop-filter:blur(6px); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:28px; gap:12px;">
+        <div style="font-size:36px;">🔒</div>
+        <div style="font-size:15px; font-weight:700; color:#f0f4f1;">Sign in to access</div>
+        <div style="font-size:13px; color:rgba(240,244,241,0.5); line-height:1.6;">Weather forecasts are available to all signed-in users — both Insurers and Beneficiaries.</div>
+        <a href="/login/" style="margin-top:8px; padding:11px 22px; background:#6bdd9a; color:#0a0f0d; border-radius:10px; text-decoration:none; font-size:13px; font-weight:700;">Sign in →</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
 <!-- CTA -->
 <section class="cta-section">
   <h2 class="cta-title">The next disruption<br>is coming. Be ready.</h2>
@@ -463,11 +533,11 @@
     <div>
       <div class="footer-col-title">Product</div>
       <ul class="footer-links">
-        <li><a href="#">How it works</a></li>
-        <li><a href="#">Features</a></li>
-        <li><a href="#">Pricing</a></li>
-        <li><a href="#">Worker dashboard</a></li>
-        <li><a href="#">Admin portal</a></li>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="/claim/" target="_blank">File a claim</a></li>
+        <li><a href="/weather/" target="_blank">Weather forecast</a></li>
       </ul>
     </div>
     <div>
@@ -562,6 +632,106 @@ window.addEventListener('scroll', () => {
     nav.style.boxShadow = 'none';
   }
 });
+
+// ── Role & auth management ──────────────────────────────────────
+function applyRoleUI() {
+  const raw = localStorage.getItem('gigsure_user');
+  const user = raw ? JSON.parse(raw) : null;
+  const role = user ? user.role : null; // 'beneficiary' | 'insurer' | null
+
+  const loginBtn    = document.getElementById('login-nav-btn');
+  const userPill    = document.getElementById('user-pill');
+  const navClaimLi  = document.getElementById('nav-claim-li');
+  const claimOverlay= document.getElementById('claim-lock-overlay');
+  const weatherOverlay = document.getElementById('weather-lock-overlay');
+  const weatherBadge   = document.getElementById('weather-role-badge');
+  const claimModuleLink= document.getElementById('claim-module-link');
+
+  if (user) {
+    // Show user pill, hide login button
+    loginBtn.style.display = 'none';
+    userPill.style.display = 'flex';
+    const initials = ((user.first_name||'?')[0] + (user.last_name||'?')[0]).toUpperCase();
+    document.getElementById('user-avatar').textContent = initials;
+    document.getElementById('user-name').textContent = user.first_name + ' ' + user.last_name;
+    const roleTagEl = document.getElementById('user-role-tag');
+    if (role === 'beneficiary') {
+      roleTagEl.textContent = '🛵 Beneficiary';
+      roleTagEl.style.color = '#6bdd9a';
+    } else {
+      roleTagEl.textContent = '🏛️ Insurer';
+      roleTagEl.style.color = '#60a5fa';
+    }
+  } else {
+    loginBtn.style.display = 'inline-flex';
+    userPill.style.display = 'none';
+  }
+
+  // --- Claim module: Beneficiary only ---
+  if (role === 'beneficiary') {
+    // Full access
+    claimOverlay.style.display = 'none';
+    navClaimLi.style.display = 'list-item';
+  } else if (role === 'insurer') {
+    // Locked: show overlay
+    claimOverlay.style.display = 'flex';
+    claimModuleLink.style.pointerEvents = 'none';
+    navClaimLi.style.display = 'none';
+    document.getElementById('claim-lock-title').textContent = '🏛️ Insurer access restricted';
+    document.getElementById('claim-lock-sub').textContent = 'The Claim Request module is only available to Beneficiary (gig worker) accounts. Switch to a Beneficiary account to file claims.';
+  } else {
+    // Not logged in: lock both
+    claimOverlay.style.display = 'flex';
+    claimModuleLink.style.pointerEvents = 'none';
+    navClaimLi.style.display = 'none';
+  }
+
+  // --- Weather module: all logged-in roles ---
+  if (user) {
+    weatherOverlay.style.display = 'none';
+    weatherBadge.style.display = 'inline-block';
+    if (role === 'insurer') {
+      weatherBadge.innerHTML = '<span style="font-size:10px;font-family:Geist Mono,monospace;text-transform:uppercase;letter-spacing:0.08em;background:rgba(96,165,250,0.12);color:#60a5fa;border:1px solid rgba(96,165,250,0.25);border-radius:20px;padding:3px 10px;">Insurer + Beneficiary</span>';
+    } else {
+      weatherBadge.innerHTML = '<span style="font-size:10px;font-family:Geist Mono,monospace;text-transform:uppercase;letter-spacing:0.08em;background:rgba(107,221,154,0.10);color:#6bdd9a;border:1px solid rgba(107,221,154,0.2);border-radius:20px;padding:3px 10px;">Beneficiary + Insurer</span>';
+    }
+  } else {
+    weatherOverlay.style.display = 'flex';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('gigsure_token');
+  localStorage.removeItem('gigsure_user');
+  window.location.href = '/login/';
+}
+
+// Run on load
+applyRoleUI();
+
+// ── Handle redirect reason params ──
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const reason = params.get('reason');
+  if (!reason) return;
+  const toast = document.getElementById('access-toast');
+  const msg   = document.getElementById('access-toast-msg');
+  if (reason === 'role') msg.textContent = '🏛️ Insurer access: the Claim module is for Beneficiary accounts only.';
+  if (reason === 'auth') msg.textContent = 'Please sign in to access that module.';
+  toast.style.display = 'flex';
+  setTimeout(() => { toast.style.opacity='1'; toast.style.transform='translateX(-50%) translateY(0)'; }, 50);
+  setTimeout(() => { toast.style.opacity='0'; toast.style.transform='translateX(-50%) translateY(20px)'; }, 5000);
+  // Clean URL
+  history.replaceState({}, '', '/dashboard/');
+})();
+
 </script>
+
+<!-- Access-denied toast -->
+<div id="access-toast" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1f1c;border:1px solid rgba(224,82,82,0.35);border-radius:30px;padding:13px 24px;font-size:13px;color:#f0f4f1;box-shadow:0 8px 32px rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:opacity 0.35s,transform 0.35s;z-index:500;white-space:nowrap;gap:10px;align-items:center;">
+  <span style="font-size:15px;">🔒</span>
+  <span id="access-toast-msg">The Claim module is only available to Beneficiary accounts.</span>
+</div>
+
 </body>
 </html>

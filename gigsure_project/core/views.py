@@ -1,148 +1,153 @@
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.urls.resolvers import settings
 from django.views.decorators.csrf import csrf_exempt
-
-import sqlite3
-import hashlib
-import hmac
-import secrets
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 import json
-from datetime import datetime, timedelta
-import os
 
-DATABASE = os.path.join(settings.BASE_DIR, "db.sqlite3")
 
-# ─── DB Helper ─────────────────────────────────────
-
-def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def init_db():
-    conn = get_db()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            first_name TEXT,
-            last_name TEXT,
-            email TEXT UNIQUE,
-            password_hash TEXT,
-            role TEXT,
-            company TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_login TIMESTAMP
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS sessions (
-            token TEXT PRIMARY KEY,
-            user_id INTEGER,
-            expires_at TIMESTAMP
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-# ─── Helpers ───────────────────────────────────────
-
-def hash_password(password):
-    salt = secrets.token_hex(16)
-    h = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 260000)
-    return f"{salt}${h.hex()}"
-
-def verify_password(password, stored):
-    try:
-        salt, h = stored.split("$")
-        new_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 260000)
-        return hmac.compare_digest(new_hash.hex(), h)
-    except:
-        return False
-
-def create_session(conn, user_id):
-    token = secrets.token_urlsafe(32)
-    expires = datetime.utcnow() + timedelta(days=7)
-
-    conn.execute(
-        "INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)",
-        (token, user_id, expires)
-    )
-    conn.commit()
-    return token
-
-def serialize_user(user):
-    if not user:
-        return {}
-    d = dict(user)
-    d.pop("password_hash", None)
-    return d
-
-# ─── Views ─────────────────────────────────────────
+# ── Page views ──────────────────────────────────────────────────────────────
 
 def home(request):
     return render(request, "login.html")
 
+
 def dashboard(request):
-    return render(request, 'index.html')
+    return render(request, "index.html")
+
+
+def claim_page(request):
+    return render(request, "claim.html")
+
+
+def weather_page(request):
+    return render(request, "weather.html")
+
+
+# ── Helper: build user dict for JSON responses ───────────────────────────────
+
+def _user_dict(user, role=None):
+    """
+    Build a serialisable user dict.
+    Role is stored in the session (request.session['role']) so it survives
+    across page loads without needing a separate Profile model.
+    """
+    return {
+        "id":         user.id,
+        "email":      user.email,
+        "first_name": user.first_name,
+        "last_name":  user.last_name,
+        "role":       role or "beneficiary",
+        "created_at": user.date_joined.isoformat() if user.date_joined else None,
+        "last_login": user.last_login.isoformat() if user.last_login else None,
+    }
+
+
+# ── API: Signup ──────────────────────────────────────────────────────────────
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def signup(request):
-    if request.method != "POST":
-        return JsonResponse({"success": False}, status=405)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "errors": {"general": "Invalid JSON body."}}, status=400)
 
-    data = json.loads(request.body)
+    email      = (data.get("email") or "").strip()
+    password   = data.get("password", "")
+    first_name = (data.get("first_name") or "").strip()
+    last_name  = (data.get("last_name") or "").strip()
+    role       = data.get("role", "beneficiary")
+    company    = (data.get("company") or "").strip()
 
-    conn = get_db()
+    errors = {}
+    if not first_name:
+        errors["first_name"] = "First name is required."
+    if not last_name:
+        errors["last_name"] = "Last name is required."
+    if not email:
+        errors["email"] = "Email is required."
+    if not password or len(password) < 6:
+        errors["password"] = "Password must be at least 6 characters."
+    if role not in ("insurer", "beneficiary"):
+        errors["role"] = "Invalid role selected."
+    if errors:
+        return JsonResponse({"success": False, "errors": errors}, status=400)
 
-    email = data.get("email")
-    password = data.get("password")
+    if User.objects.filter(username=email).exists():
+        return JsonResponse(
+            {"success": False, "errors": {"email": "An account with this email already exists."}},
+            status=400,
+        )
 
-    existing = conn.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()
-    if existing:
-        return JsonResponse({"success": False, "error": "Email exists"}, status=400)
-
-    pw_hash = hash_password(password)
-
-    cursor = conn.execute(
-        "INSERT INTO users (email, password_hash) VALUES (?, ?)",
-        (email, pw_hash)
+    user = User.objects.create_user(
+        username=email, email=email, password=password,
+        first_name=first_name, last_name=last_name,
     )
-    conn.commit()
 
-    token = create_session(conn, cursor.lastrowid)
+    auth_login(request, user)
+    request.session["role"] = role
+    request.session["company"] = company
 
-    return JsonResponse({"success": True, "token": token})
+    return JsonResponse({"success": True, "user": _user_dict(user, role=role)})
+
+
+# ── API: Login ───────────────────────────────────────────────────────────────
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def login(request):
-    if request.method != "POST":
-        return JsonResponse({"success": False}, status=405)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "errors": {"general": "Invalid JSON body."}}, status=400)
 
-    data = json.loads(request.body)
+    email    = (data.get("email") or "").strip()
+    password = data.get("password", "")
+    role     = data.get("role", "beneficiary")
 
-    conn = get_db()
+    if not email or not password:
+        return JsonResponse(
+            {"success": False, "errors": {"general": "Please fill in all fields."}}, status=400,
+        )
 
-    email = data.get("email")
-    password = data.get("password")
+    user = authenticate(request, username=email, password=password)
+    if user is None:
+        return JsonResponse(
+            {"success": False, "errors": {"general": "Incorrect email or password."}}, status=401,
+        )
 
-    user = conn.execute(
-        "SELECT * FROM users WHERE email=?", (email,)
-    ).fetchone()
+    auth_login(request, user)
+    request.session["role"] = role
 
-    if not user or not verify_password(password, user["password_hash"]):
-        return JsonResponse({"success": False, "error": "Invalid credentials"}, status=401)
+    return JsonResponse({"success": True, "user": _user_dict(user, role=role)})
 
-    token = create_session(conn, user["id"])
+
+# ── API: Me (session check) ──────────────────────────────────────────────────
+
+def me(request):
+    if request.user.is_authenticated:
+        role = request.session.get("role", "beneficiary")
+        return JsonResponse({"user": _user_dict(request.user, role=role)})
+    return JsonResponse({"user": None})
+
+
+# ── API: Logout ──────────────────────────────────────────────────────────────
+
+@csrf_exempt
+def logout(request):
+    auth_logout(request)
+    return JsonResponse({"success": True})
+
+from django.http import JsonResponse
+from .utils.weather import get_weather
+
+def weather_api(request):
+    city = "Vadodara"   # you can make this dynamic later
+    data = get_weather(city)
 
     return JsonResponse({
         "success": True,
-        "token": token,
-        "user": serialize_user(user)
+        "data": data
     })
-
-def me(request):
-    return JsonResponse({"message": "Auth check later"})
-
-def logout(request):
-    return JsonResponse({"success": True})

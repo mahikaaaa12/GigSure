@@ -1,0 +1,273 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File a Claim — GigSure</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'claim.css' %}">
+</head>
+<body>
+<script>
+// ── Role guard: Beneficiary only ──
+(function() {
+  const raw = localStorage.getItem('gigsure_user');
+  if (!raw) { window.location.href = '/login/?next=claim&reason=auth'; return; }
+  const user = JSON.parse(raw);
+  if (user.role !== 'beneficiary') { window.location.href = '/dashboard/?reason=role'; }
+})();
+</script>
+
+<nav>
+  <a href="/dashboard/" class="nav-logo">
+    <div class="nav-logo-icon">🛡️</div>
+    <span class="nav-logo-text">GigSure</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <a href="/dashboard/" class="nav-back">← Back to home</a>
+    <div id="claim-user-pill" style="display:flex;align-items:center;gap:8px;background:rgba(107,221,154,0.08);border:1px solid rgba(107,221,154,0.2);border-radius:20px;padding:6px 14px;">
+      <div id="claim-user-avatar" style="width:24px;height:24px;border-radius:50%;background:#1a6b3a;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#6bdd9a;font-family:'Geist Mono',monospace;flex-shrink:0;"></div>
+      <div>
+        <span id="claim-user-name" style="font-size:13px;font-weight:600;color:#f0f4f1;"></span>
+        <span style="font-size:11px;color:#6bdd9a;margin-left:6px;">🛵 Beneficiary</span>
+      </div>
+    </div>
+  </div>
+</nav>
+<script>
+// Populate nav user info
+(function() {
+  const raw = localStorage.getItem('gigsure_user');
+  if (!raw) return;
+  const user = JSON.parse(raw);
+  const initials = ((user.first_name||'?')[0]+(user.last_name||'?')[0]).toUpperCase();
+  document.getElementById('claim-user-avatar').textContent = initials;
+  document.getElementById('claim-user-name').textContent = user.first_name + ' ' + user.last_name;
+})();
+</script>
+
+<div class="page-wrap">
+
+  <div class="page-eyebrow">Claim request module</div>
+  <h1 class="page-title">File your<br><em>income claim.</em></h1>
+  <p class="page-subtitle">Tell us what happened. Our AI will verify the disruption and process your payout in under 60 seconds.</p>
+
+  <!-- Step bar -->
+  <div class="steps-bar">
+    <div class="step-pill active">
+      <div class="step-num-circle">1</div>
+      <span class="step-label">Your details</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-pill">
+      <div class="step-num-circle">2</div>
+      <span class="step-label">Disruption type</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-pill">
+      <div class="step-num-circle">3</div>
+      <span class="step-label">Loss details</span>
+    </div>
+    <div class="step-connector"></div>
+    <div class="step-pill">
+      <div class="step-num-circle">4</div>
+      <span class="step-label">Submit</span>
+    </div>
+  </div>
+
+  <!-- Active weather alert -->
+  <div class="status-banner">
+    <div class="status-icon">⚠️</div>
+    <div class="status-text">
+      <div class="status-title">Heavy rainfall detected in your zone — Vadodara, GJ</div>
+      <div class="status-body">Demand dropped 64% as of 14:30 IST. You may be eligible for an automatic disruption payout.</div>
+    </div>
+  </div>
+
+  <form id="claimForm" onsubmit="handleSubmit(event)" novalidate>
+
+    <!-- Section 1: Worker Details -->
+    <div class="form-section-label">01 — Worker details</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Full name <span>*</span></label>
+        <input type="text" placeholder="e.g. Ravi Kumar" required>
+      </div>
+      <div class="field">
+        <label>Phone number <span>*</span></label>
+        <input type="tel" placeholder="+91 98765 43210" required>
+      </div>
+      <div class="field">
+        <label>UPI ID <span>*</span></label>
+        <input type="text" placeholder="yourname@upi" required>
+      </div>
+      <div class="field">
+        <label>Platform <span>*</span></label>
+        <select required>
+          <option value="" disabled selected>Select your platform</option>
+          <option>Swiggy</option>
+          <option>Zomato</option>
+          <option>Blinkit</option>
+          <option>Ola</option>
+          <option>Rapido</option>
+          <option>Porter</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Worker ID / Policy number <span>*</span></label>
+        <input type="text" placeholder="GS-XXXXXXXX" required>
+      </div>
+      <div class="field">
+        <label>City / Zone</label>
+        <input type="text" placeholder="e.g. Bengaluru North" value="Vadodara">
+      </div>
+    </div>
+
+    <!-- Section 2: Disruption type -->
+    <div class="form-section-label">02 — What disrupted your income?</div>
+    <div class="disruption-grid" id="disruptionGrid">
+      <div class="disruption-card selected" onclick="selectDisruption(this)">
+        <span class="dc-icon">🌧️</span>
+        <div class="dc-label">Heavy rain</div>
+        <div class="dc-sub">Weather event</div>
+      </div>
+      <div class="disruption-card" onclick="selectDisruption(this)">
+        <span class="dc-icon">🚫</span>
+        <div class="dc-label">Shutdown</div>
+        <div class="dc-sub">City / area closure</div>
+      </div>
+      <div class="disruption-card" onclick="selectDisruption(this)">
+        <span class="dc-icon">📵</span>
+        <div class="dc-label">Platform outage</div>
+        <div class="dc-sub">App down / no orders</div>
+      </div>
+      <div class="disruption-card" onclick="selectDisruption(this)">
+        <span class="dc-icon">🚗</span>
+        <div class="dc-label">Traffic blockage</div>
+        <div class="dc-sub">Roads blocked</div>
+      </div>
+      <div class="disruption-card" onclick="selectDisruption(this)">
+        <span class="dc-icon">⚡</span>
+        <div class="dc-label">Power outage</div>
+        <div class="dc-sub">Area blackout</div>
+      </div>
+      <div class="disruption-card" onclick="selectDisruption(this)">
+        <span class="dc-icon">🗓️</span>
+        <div class="dc-label">Other</div>
+        <div class="dc-sub">Describe below</div>
+      </div>
+    </div>
+
+    <!-- Section 3: Incident & loss details -->
+    <div class="form-section-label">03 — Incident & loss details</div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Date of disruption <span>*</span></label>
+        <input type="date" id="incidentDate" required>
+      </div>
+      <div class="field">
+        <label>Time disruption started</label>
+        <input type="time">
+      </div>
+      <div class="field">
+        <label>Expected earnings today (₹) <span>*</span></label>
+        <input type="number" placeholder="900" min="0" id="expectedEarnings" oninput="updateEstimate()" required>
+      </div>
+      <div class="field">
+        <label>Actual earnings today (₹) <span>*</span></label>
+        <input type="number" placeholder="310" min="0" id="actualEarnings" oninput="updateEstimate()" required>
+      </div>
+      <div class="field full">
+        <label>Describe what happened</label>
+        <textarea placeholder="e.g. Heavy rain started around 2 PM. Orders dropped completely. I was in Alkapuri zone..."></textarea>
+      </div>
+    </div>
+
+    <!-- Evidence upload -->
+    <div class="form-section-label">04 — Supporting evidence (optional)</div>
+    <div class="upload-box">
+      <input type="file" accept="image/*,.pdf" multiple>
+      <div class="upload-icon">📎</div>
+      <div class="upload-title">Drag files here or click to upload</div>
+      <div class="upload-sub">Screenshots of earnings, app outage, weather photos · Max 10MB each</div>
+    </div>
+
+    <!-- Payout estimate -->
+    <div class="estimate-box" id="estimateBox">
+      <div>
+        <div class="estimate-label">Estimated payout</div>
+        <div class="estimate-amount" id="estimateAmt">₹—</div>
+        <div class="estimate-note">AI-calculated · Subject to verification</div>
+      </div>
+      <div class="estimate-breakdown">
+        <div class="eb-row">
+          <span class="eb-row-label">Expected earnings</span>
+          <span class="eb-row-val" id="ebExpected">₹—</span>
+        </div>
+        <div class="eb-row">
+          <span class="eb-row-label">Actual earnings</span>
+          <span class="eb-row-val red" id="ebActual">₹—</span>
+        </div>
+        <div class="eb-row">
+          <span class="eb-row-label">Estimated loss</span>
+          <span class="eb-row-val" id="ebLoss">₹—</span>
+        </div>
+        <div class="eb-row">
+          <span class="eb-row-label">Payout (80%)</span>
+          <span class="eb-row-val green" id="ebPayout">₹—</span>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn">Submit claim →</button>
+    <p class="submit-note">Your data is encrypted and only used to process this claim. DPDP Act compliant.</p>
+
+  </form>
+</div>
+
+<!-- Success overlay -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-icon">✅</div>
+  <div class="success-title">Claim submitted!</div>
+  <p class="success-body">Your claim is being verified by our AI. If approved, your payout will be credited to your UPI ID in under 60 seconds.</p>
+  <div class="success-id" id="claimId">Claim ID: GS-2026-000000</div>
+  <div class="success-actions">
+    <button class="btn-green" onclick="window.location.href='/dashboard/'">Back to home</button>
+    <button class="btn-outline" onclick="document.getElementById('successOverlay').classList.remove('show'); document.getElementById('claimForm').reset(); updateEstimate();">File another</button>
+  </div>
+</div>
+
+<script>
+  // Set today's date as default
+  document.getElementById('incidentDate').valueAsDate = new Date();
+
+  function selectDisruption(el) {
+    document.querySelectorAll('.disruption-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function updateEstimate() {
+    const exp = parseFloat(document.getElementById('expectedEarnings').value) || 0;
+    const act = parseFloat(document.getElementById('actualEarnings').value) || 0;
+    const loss = Math.max(0, exp - act);
+    const payout = Math.round(loss * 0.8);
+
+    document.getElementById('ebExpected').textContent = exp ? '₹' + exp : '₹—';
+    document.getElementById('ebActual').textContent = act ? '₹' + act : '₹—';
+    document.getElementById('ebLoss').textContent = loss ? '₹' + loss : '₹—';
+    document.getElementById('ebPayout').textContent = payout ? '₹' + payout : '₹—';
+    document.getElementById('estimateAmt').textContent = payout ? '₹' + payout : '₹—';
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const id = 'GS-2026-' + Math.floor(100000 + Math.random() * 900000);
+    document.getElementById('claimId').textContent = 'Claim ID: ' + id;
+    document.getElementById('successOverlay').classList.add('show');
+  }
+</script>
+</body>
+</html>
