@@ -151,3 +151,21 @@ def weather_api(request):
         "success": True,
         "data": data
     })
+    
+# ── Weather API ──────────────────────────────────────────────────────────────  
+    
+import requests
+from django.http import JsonResponse
+
+def get_weather(request):
+    city = request.GET.get('city')
+    api_key = "3ed7b1e3120759cf991337fb2f2ee2f0"
+
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
+    response = requests.get(url)
+    data = response.json()
+
+    if response.status_code == 200:
+        return JsonResponse(data)
+    else:
+        return JsonResponse({'error': 'Failed to fetch'}, status=400)

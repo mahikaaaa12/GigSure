@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Weather Forecast — GigSure</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
@@ -667,7 +667,7 @@
 </div>
 
 <script>
-  const API_KEY = '6fa2bdbf73f34f259fd155616240204';
+  const API_KEY = 'd76f6b52979d4579b5543501260204';
   let tempChartInstance = null;
 
   /* ─── Sky canvas particle/weather effect ─── */
@@ -837,8 +837,10 @@
     try {
       const url = `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${encodeURIComponent(query)}&days=5&aqi=no&alerts=no`;
       const res = await fetch(url);
+      const data = await res.json();
+      console.log(data);
       if (!res.ok) throw new Error('API error');
-      renderWeather(await res.json());
+      renderWeather(data);
     } catch(e) {
       showError('Could not fetch weather data. Please check the city name and try again.');
     } finally {
