@@ -34,14 +34,28 @@
     <li id="nav-claim-li"><a href="/claim/" target="_blank" class="nav-cta" id="nav-claim-link">File a claim →</a></li>
   </ul>
   <!-- User pill (shown when logged in) -->
-  <div id="user-pill" style="display:none; align-items:center; gap:10px;">
+<div id="user-pill" style="display:none; align-items:center; gap:10px; position:relative;">
+
+  <!-- Clickable user section -->
+  <div id="user-trigger" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
     <div id="user-avatar" style="width:34px;height:34px;border-radius:50%;background:#1a6b3a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#6bdd9a;font-family:'Geist Mono',monospace;flex-shrink:0;"></div>
+    
     <div style="line-height:1.3;">
       <div id="user-name" style="font-size:13px;font-weight:600;color:#f0f4f1;"></div>
       <div id="user-role-tag" style="font-size:11px;"></div>
     </div>
-    <button onclick="doLogout()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(240,244,241,0.5);font-family:'Geist',sans-serif;font-size:12px;padding:5px 12px;border-radius:20px;cursor:pointer;transition:all 0.2s;margin-left:4px;" onmouseover="this.style.borderColor='rgba(224,82,82,0.4)';this.style.color='#e05252'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='rgba(240,244,241,0.5)'">Sign out</button>
   </div>
+
+  <!-- Dropdown menu -->
+  <div id="user-dropdown" style="display:none; position:absolute; top:45px; right:0; background:#111a14; border:1px solid rgba(255,255,255,0.1); border-radius:12px; min-width:160px; box-shadow:0 10px 30px rgba(0,0,0,0.4); overflow:hidden;">
+
+    <div class="dropdown-item" onclick="goProfile()">👤 Profile</div>
+    <div class="dropdown-item" onclick="goClaims()">📋 Claims</div>
+    <div class="dropdown-item" onclick="doLogout()" style="color:#e05252;">🚪 Logout</div>
+
+  </div>
+
+</div>
   <!-- Login button (shown when logged out) -->
 <a href="/login/?force=true" id="login-nav-btn" class="nav-cta">Sign in →</a>
 </nav>
@@ -724,6 +738,29 @@ applyRoleUI();
   // Clean URL
   history.replaceState({}, '', '/dashboard/');
 })();
+
+const userTrigger = document.getElementById('user-trigger');
+const dropdown = document.getElementById('user-dropdown');
+
+userTrigger.addEventListener('click', () => {
+  dropdown.style.display =
+    dropdown.style.display === 'block' ? 'none' : 'block';
+});
+
+// Close when clicking outside
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('user-pill').contains(e.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+
+function goProfile() {
+  window.location.href = '/profile/';
+}
+
+function goClaims() {
+  window.location.href = '/claim/';
+}
 
 </script>
 
