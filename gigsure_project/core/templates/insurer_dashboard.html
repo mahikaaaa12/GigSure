@@ -247,7 +247,9 @@ tr:hover td { background: rgba(255,255,255,0.015); }
       <button class="nav-item" onclick="showPanel('ai')"><span class="nav-icon">💬</span>AI Assistant</button>
     </nav>
     <div class="sidebar-footer">
-      <div class="insurer-badge">🏛️ Insurer</div>
+      <div class="insurer-badge" onclick="goProfile()" style="cursor:pointer;">
+        🏛️ Insurer
+      </div>
       <div style="font-size:12px;color:var(--muted);margin-top:8px;" id="sb-name">—</div>
     </div>
   </aside>
@@ -1072,6 +1074,10 @@ function mockAutoClaimFromWeather(city, condition, rain, wind) {
   toast(`Auto-claim ${claimId} triggered for ${city}!`);
   loadAnalytics();
   updateClaimBadge();
+}
+
+function goProfile() {
+  window.location.href = "/profile/";
 }
 
 // ── ML tester ──

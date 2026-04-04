@@ -54,6 +54,9 @@ def insurer_dashboard(request):
     """Insurer-only dashboard page."""
     return render(request, "insurer_dashboard.html")
 
+def profile_page(request):
+    return render(request, "profile.html")
+
 
 # ══════════════════════════════════════════════════════════════
 # HELPER

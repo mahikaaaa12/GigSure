@@ -9,6 +9,7 @@ urlpatterns = [
     path("claim/",          views.claim_page,         name="claim"),
     path("weather/",        views.weather_page,       name="weather"),
     path("insurer/",        views.insurer_dashboard,  name="insurer-dashboard"),
+    path("profile/",        views.profile_page,       name="profile"),
 
     # ── Auth API ─────────────────────────────────────────────────────
     path("api/signup/",     views.signup,             name="api-signup"),
