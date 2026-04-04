@@ -198,22 +198,54 @@ This follows a **parametric insurance model** where payouts are triggered by con
 ```
 GigSure/
 │
-├── templates/
-│   ├── login.html
-│   ├── index.html
-│   ├── claim.html
-│   ├── insurer_dashboard.html
-│   └── weather.html
-│
-├── core/
-│   ├── views.py
-│   ├── urls.py
-│   └── ml_model.py
-│
-├── static/
-│   └── style.css
-│
-└── manage.py
+├── gigsure_project/
+│   │
+│   ├── core/
+│   │   ├── __pycache__/
+│   │   ├── core/
+│   │   ├── management/
+│   │   ├── migrations/
+│   │   │
+│   │   ├── ml_model/              # ML-related utilities
+│   │   │
+│   │   ├── static/
+│   │   │   ├── claim.css
+│   │   │   ├── login.css
+│   │   │   ├── style.css
+│   │   │   └── weather.css
+│   │   │
+│   │   ├── templates/
+│   │   │   ├── claim.html
+│   │   │   ├── index.html
+│   │   │   ├── insurer_dashboard.html
+│   │   │   ├── login.html
+│   │   │   └── weather.html
+│   │   │
+│   │   ├── utils/
+│   │   │   ├── __pycache__/
+│   │   │   └── weather.py
+│   │   │
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── ml_model.py
+│   │   ├── models.py
+│   │   ├── tests.py
+│   │   ├── urls.py
+│   │   ├── views.py
+│   │   └── weather_monitor.py
+│   │
+│   ├── gigsure_project/
+│   │   ├── __pycache__/
+│   │   ├── __init__.py
+│   │   ├── asgi.py
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   │
+│   ├── db.sqlite3
+│   ├── gigsure.db
+│   └── manage.py
 ```
 
 ---
