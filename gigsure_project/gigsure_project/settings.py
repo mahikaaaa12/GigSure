@@ -116,3 +116,22 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# ── GigSure additions ───────────────────────────────────────────
+# Anthropic API key (for AI assistant)
+ANTHROPIC_API_KEY = 'your-anthropic-key-here'  # sk-ant-...
+
+# WeatherAPI.com key (free at weatherapi.com)
+WEATHER_API_KEY = 'd76f6b52979d4579b5543501260204'  # replace with yours
+
+# Email backend (for claim notifications)
+# For development, print to console:
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# For production with Gmail:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'you@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your-app-password'
+DEFAULT_FROM_EMAIL = 'noreply@gigsure.in'

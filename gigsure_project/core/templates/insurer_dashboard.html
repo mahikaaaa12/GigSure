@@ -1,0 +1,1143 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insurer Dashboard — GigSure</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080e0a; --surface: rgba(255,255,255,0.03); --surface2: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.07); --text: #f0f4f1; --muted: rgba(240,244,241,0.45);
+  --green: #6bdd9a; --green-bg: rgba(107,221,154,0.08);
+  --blue: #60a5fa; --blue-bg: rgba(96,165,250,0.08);
+  --amber: #f5b942; --amber-bg: rgba(245,185,66,0.08);
+  --red: #e05252; --red-bg: rgba(224,82,82,0.08);
+  --serif: 'Instrument Serif', Georgia, serif;
+  --mono: 'Geist Mono', monospace; --sans: 'Geist', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+.layout { display: flex; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar { width: 220px; flex-shrink: 0; background: rgba(255,255,255,0.02); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; }
+.sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 20px 24px; border-bottom: 1px solid var(--border); text-decoration: none; color: var(--text); font-weight: 700; font-size: 17px; }
+.sidebar-logo-icon { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #1a6b3a, #2d8a55); display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.sidebar-nav { padding: 16px 12px; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; cursor: pointer; color: var(--muted); font-size: 13.5px; font-weight: 500; transition: all 0.18s; margin-bottom: 2px; border: none; background: transparent; width: 100%; text-align: left; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--green-bg); color: var(--green); }
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+.insurer-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(96,165,250,0.2); border-radius: 20px; padding: 5px 10px; font-size: 11px; font-family: var(--mono); }
+
+/* Main */
+.main { flex: 1; overflow-y: auto; }
+.topbar { position: sticky; top: 0; z-index: 50; background: rgba(8,14,10,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-size: 15px; font-weight: 600; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+/* Panels */
+.panel { display: none; padding: 28px; }
+.panel.active { display: block; }
+.panel-header { margin-bottom: 28px; }
+.panel-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--green); margin-bottom: 8px; }
+.panel-title { font-family: var(--serif); font-size: 28px; letter-spacing: -0.5px; }
+.panel-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+/* Stats */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 20px 16px; }
+.stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 8px; font-family: var(--mono); text-transform: uppercase; }
+.stat-value { font-family: var(--serif); font-size: 32px; letter-spacing: -1px; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* Filters */
+.filters-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+.filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-family: var(--sans); transition: all 0.18s; }
+.filter-btn:hover { background: var(--surface2); color: var(--text); }
+.filter-btn.active { background: var(--green-bg); color: var(--green); border-color: rgba(107,221,154,0.3); }
+
+/* Table */
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+thead { border-bottom: 1px solid var(--border); }
+th { padding: 12px 16px; text-align: left; font-size: 11px; font-family: var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.015); }
+
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 10.5px; font-family: var(--mono); font-weight: 500; }
+.badge-pending  { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(245,185,66,0.2); }
+.badge-approved { background: var(--green-bg); color: var(--green); border: 1px solid rgba(107,221,154,0.2); }
+.badge-rejected { background: var(--red-bg); color: var(--red); border: 1px solid rgba(224,82,82,0.2); }
+.badge-auto     { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(96,165,250,0.2); }
+.badge-manual   { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+.action-btn { border: none; border-radius: 6px; padding: 5px 12px; font-size: 11.5px; cursor: pointer; font-family: var(--sans); font-weight: 600; transition: all 0.15s; }
+.btn-approve { background: var(--green-bg); color: var(--green); } .btn-approve:hover { background: rgba(107,221,154,0.18); }
+.btn-reject  { background: var(--red-bg);   color: var(--red);   } .btn-reject:hover  { background: rgba(224,82,82,0.18);  }
+.btn-view    { background: var(--surface2);  color: var(--muted); } .btn-view:hover    { color: var(--text); }
+
+/* Policy cards */
+.policy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.policy-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; transition: border-color 0.2s; }
+.policy-card:hover { border-color: rgba(107,221,154,0.2); }
+.policy-card.sample-card { border-color: rgba(107,221,154,0.15); background: linear-gradient(135deg, rgba(107,221,154,0.03), transparent); }
+.policy-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.policy-name { font-size: 16px; font-weight: 600; }
+.policy-meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.threshold-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); font-size: 12px; }
+.threshold-label { color: var(--muted); }
+.threshold-val { font-family: var(--mono); color: var(--green); }
+
+/* ML card */
+.ml-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 16px; }
+.ml-score-big { font-family: var(--serif); font-size: 56px; letter-spacing: -2px; }
+.ml-bar-wrap { margin: 16px 0; }
+.ml-bar-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.ml-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+/* ── IMPROVED WEATHER MONITOR ── */
+.weather-cities-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
+.city-tab {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 16px; font-size: 13px; cursor: pointer;
+  transition: all 0.2s; color: var(--muted); font-family: var(--sans);
+}
+.city-tab:hover { background: var(--surface2); color: var(--text); }
+.city-tab.active { background: var(--green-bg); color: var(--green); border-color: rgba(107,221,154,0.3); }
+.city-tab .city-risk-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.city-tab .city-risk-dot.green { background: var(--green); }
+.city-tab .city-risk-dot.amber { background: var(--amber); }
+.city-tab .city-risk-dot.red   { background: var(--red); animation: pulse-dot 1.5s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+.weather-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.weather-city-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 22px; position: relative; overflow: hidden;
+  transition: border-color 0.25s, transform 0.2s;
+}
+.weather-city-card:hover { transform: translateY(-2px); }
+.weather-city-card.risk-low    { border-color: rgba(107,221,154,0.2); }
+.weather-city-card.risk-medium { border-color: rgba(245,185,66,0.3); }
+.weather-city-card.risk-high   { border-color: rgba(224,82,82,0.4); }
+.weather-city-card .card-glow {
+  position: absolute; top: -30px; right: -30px; width: 120px; height: 120px;
+  border-radius: 50%; pointer-events: none; opacity: 0.15;
+}
+.risk-low  .card-glow { background: radial-gradient(circle, var(--green), transparent 70%); }
+.risk-medium .card-glow { background: radial-gradient(circle, var(--amber), transparent 70%); }
+.risk-high .card-glow   { background: radial-gradient(circle, var(--red),   transparent 70%); }
+
+.wc-city-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.wc-city-name { font-size: 16px; font-weight: 600; color: var(--text); }
+.wc-condition { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.wc-icon { font-size: 32px; line-height: 1; }
+.wc-temp { font-family: var(--serif); font-size: 36px; letter-spacing: -1px; margin-bottom: 12px; }
+.wc-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.wc-metric { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 8px 10px; }
+.wc-metric-label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.wc-metric-val { font-size: 14px; font-weight: 600; }
+.wc-risk-bar-wrap { margin-bottom: 12px; }
+.wc-risk-label-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-family: var(--mono); margin-bottom: 5px; color: var(--muted); }
+.wc-risk-label-row strong { font-size: 12px; }
+.wc-risk-track { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.wc-risk-fill { height: 100%; border-radius: 3px; transition: width 1.2s ease; }
+.risk-low  .wc-risk-fill { background: var(--green); }
+.risk-medium .wc-risk-fill { background: var(--amber); }
+.risk-high   .wc-risk-fill { background: var(--red); }
+.wc-alert-tag {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+  border-radius: 20px; font-size: 11px; font-family: var(--mono);
+}
+.wc-alert-tag.clear   { background: var(--green-bg); color: var(--green); border: 1px solid rgba(107,221,154,0.2); }
+.wc-alert-tag.caution { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(245,185,66,0.2); }
+.wc-alert-tag.danger  { background: var(--red-bg);   color: var(--red);   border: 1px solid rgba(224,82,82,0.2); }
+.wc-alert-tag.danger .blink { animation: pulse-dot 1s infinite; }
+
+/* Weather monitor summary strip */
+.monitor-summary {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+}
+.ms-item { text-align: center; }
+.ms-label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.ms-val { font-family: var(--serif); font-size: 28px; letter-spacing: -1px; }
+.ms-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* Weather check running state */
+.weather-check-running {
+  display: none; background: var(--blue-bg); border: 1px solid rgba(96,165,250,0.2);
+  border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
+  align-items: center; gap: 12px; font-size: 13px;
+}
+.weather-check-running.show { display: flex; }
+.wc-spinner { width: 16px; height: 16px; border: 2px solid rgba(96,165,250,0.3); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Modal */
+.modal-bg { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); align-items: center; justify-content: center; }
+.modal-bg.show { display: flex; }
+.modal { background: #0f1a12; border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 480px; max-width: 95vw; }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.modal-field { margin-bottom: 14px; }
+.modal-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px; }
+.modal-input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 13px; font-family: var(--sans); outline: none; }
+.modal-input:focus { border-color: rgba(107,221,154,0.4); }
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+.btn-primary   { background: var(--green); color: #0a1a0e; border: none; border-radius: 8px; padding: 9px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 9px 20px; font-size: 13px; cursor: pointer; }
+
+/* AI chat */
+.ai-chat-wrap { max-width: 680px; }
+.chat-messages { min-height: 200px; max-height: 360px; overflow-y: auto; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
+.chat-bubble { border-radius: 12px; padding: 12px 16px; font-size: 13px; line-height: 1.6; max-width: 85%; }
+.chat-bubble.user { background: var(--green-bg); border: 1px solid rgba(107,221,154,0.15); align-self: flex-end; color: var(--text); }
+.chat-bubble.ai   { background: var(--surface2); border: 1px solid var(--border); align-self: flex-start; color: var(--text); }
+.chat-input-row { display: flex; gap: 8px; }
+.chat-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 13px; font-family: var(--sans); outline: none; }
+.chat-input:focus { border-color: rgba(107,221,154,0.35); }
+.chat-send { background: var(--green); color: #0a1a0e; border: none; border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+/* Toast */
+#toast { position: fixed; bottom: 28px; right: 28px; z-index: 999; background: #111a14; border: 1px solid var(--border); border-radius: 12px; padding: 12px 20px; font-size: 13px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,0.5); opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity 0.3s, transform 0.3s; }
+#toast.show { opacity: 1; transform: translateY(0); }
+
+/* Notification badge */
+.claim-notif-badge { display: none; position: absolute; top: -4px; right: -4px; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 5px; font-family: var(--mono); }
+.claim-notif-badge.show { display: block; }
+
+@media (max-width: 768px) { .sidebar { display: none; } .stats-row { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<!-- Role guard -->
+<script>
+(function() {
+  const raw = localStorage.getItem('gigsure_user');
+  if (!raw) { window.location.href = '/login/'; return; }
+  const u = JSON.parse(raw);
+  if (u.role !== 'insurer') { window.location.href = '/dashboard/'; }
+})();
+</script>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <a href="/dashboard/" class="sidebar-logo">
+      <div class="sidebar-logo-icon">🛡️</div>
+      <span>GigSure</span>
+    </a>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPanel('overview')"><span class="nav-icon">📊</span>Overview</button>
+      <button class="nav-item" onclick="showPanel('claims')" style="position:relative;">
+        <span class="nav-icon">📋</span>Claims
+        <span class="claim-notif-badge" id="claims-badge">0</span>
+      </button>
+      <button class="nav-item" onclick="showPanel('policies')"><span class="nav-icon">🗂️</span>Policies</button>
+      <button class="nav-item" onclick="showPanel('weather')"><span class="nav-icon">🌦️</span>Weather Monitor</button>
+      <button class="nav-item" onclick="showPanel('ml')"><span class="nav-icon">🤖</span>ML Model</button>
+      <button class="nav-item" onclick="showPanel('ai')"><span class="nav-icon">💬</span>AI Assistant</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="insurer-badge">🏛️ Insurer</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px;" id="sb-name">—</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="panel-title">Overview</div>
+      <div class="topbar-right">
+        <button onclick="triggerMonitor()" id="weather-check-btn" style="background:var(--blue-bg);color:var(--blue);border:1px solid rgba(96,165,250,0.2);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:var(--sans);">⚡ Run Weather Check</button>
+        <button onclick="doLogout()" style="background:var(--red-bg);color:var(--red);border:1px solid rgba(224,82,82,0.2);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:var(--sans);">Sign out</button>
+      </div>
+    </div>
+
+    <!-- ══ OVERVIEW ══ -->
+    <div class="panel active" id="panel-overview">
+      <div class="panel-header">
+        <div class="panel-eyebrow">Insurer dashboard</div>
+        <div class="panel-title">Good <span id="greeting-time">morning</span>, <em id="insurer-name">Insurer.</em></div>
+        <div class="panel-sub">Real-time overview of claims, payouts, and weather risk across all zones.</div>
+      </div>
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-label">Total Claims</div><div class="stat-value" id="s-total">—</div><div class="stat-sub">All time</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Review</div><div class="stat-value" style="color:var(--amber)" id="s-pending">—</div><div class="stat-sub">Needs action</div></div>
+        <div class="stat-card"><div class="stat-label">Auto-Generated</div><div class="stat-value" style="color:var(--blue)" id="s-auto">—</div><div class="stat-sub">By weather monitor</div></div>
+        <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-value" style="color:var(--green)" id="s-payout">—</div><div class="stat-sub">Approved claims</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:16px;">📍 Claims by city</div>
+          <div id="city-breakdown">Loading...</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:16px;">📈 Auto vs Manual</div>
+          <div id="auto-vs-manual" style="display:flex;gap:24px;align-items:center;margin-top:12px;">
+            <div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--blue);margin-bottom:4px;">AUTO</div>
+              <div style="font-family:var(--serif);font-size:36px;" id="av-auto">—</div>
+            </div>
+            <div style="flex:1;height:1px;background:var(--border);"></div>
+            <div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;">MANUAL</div>
+              <div style="font-family:var(--serif);font-size:36px;" id="av-manual">—</div>
+            </div>
+          </div>
+          <div style="margin-top:20px;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Disruptions detected (last 24h)</div>
+            <div id="disruptions-24h" style="font-family:var(--serif);font-size:24px;color:var(--amber);">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CLAIMS ══ -->
+    <div class="panel" id="panel-claims">
+      <div class="panel-header">
+        <div class="panel-eyebrow">Claim management</div>
+        <div class="panel-title">All claims</div>
+        <div class="panel-sub">Review, approve, or reject insurance claims. Claims submitted by beneficiaries appear here in real time.</div>
+      </div>
+      <div class="filters-bar">
+        <button class="filter-btn active" onclick="filterClaims('', this)">All</button>
+        <button class="filter-btn" onclick="filterClaims('pending', this)">⏳ Pending</button>
+        <button class="filter-btn" onclick="filterClaims('approved', this)">✅ Approved</button>
+        <button class="filter-btn" onclick="filterClaims('rejected', this)">❌ Rejected</button>
+        <button class="filter-btn" onclick="filterClaimsBySource('auto', this)">🤖 Auto</button>
+        <button class="filter-btn" onclick="filterClaimsBySource('manual', this)">✍️ Manual</button>
+        <button class="filter-btn" onclick="refreshClaims(this)" style="margin-left:auto;">🔄 Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Claim ID</th><th>User</th><th>City</th><th>Date</th>
+              <th>Source</th><th>Disruption</th><th>Payout</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="claims-tbody">
+            <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px;">Loading claims...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ POLICIES ══ -->
+    <div class="panel" id="panel-policies">
+      <div class="panel-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="panel-eyebrow">Policy management</div>
+          <div class="panel-title">Your policies</div>
+          <div class="panel-sub">Configure weather threshold policies. Sample policies are preloaded — customise or add your own.</div>
+        </div>
+        <button class="btn-primary" onclick="openNewPolicyModal()">+ New policy</button>
+      </div>
+      <div class="policy-grid" id="policy-grid">
+        <div style="color:var(--muted);font-size:13px;">Loading policies...</div>
+      </div>
+    </div>
+
+    <!-- ══ WEATHER MONITOR ══ (IMPROVED) -->
+    <div class="panel" id="panel-weather">
+      <div class="panel-header">
+        <div class="panel-eyebrow">Weather monitoring</div>
+        <div class="panel-title">Live disruption feed</div>
+        <div class="panel-sub">Real-time weather data and risk scores across all monitored cities. Red = high risk of auto-claims.</div>
+      </div>
+
+      <!-- Running indicator -->
+      <div class="weather-check-running" id="weather-check-indicator">
+        <div class="wc-spinner"></div>
+        <div>
+          <strong style="color:var(--blue);">Running weather check</strong>
+          <span style="color:var(--muted);font-size:12px;margin-left:8px;" id="wc-progress-text">Fetching live data for all cities...</span>
+        </div>
+      </div>
+
+      <!-- Monitor summary strip -->
+      <div class="monitor-summary" id="monitor-summary">
+        <div class="ms-item">
+          <div class="ms-label">Cities monitored</div>
+          <div class="ms-val" id="ms-cities">5</div>
+          <div class="ms-sub">All zones active</div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-label">High risk zones</div>
+          <div class="ms-val" style="color:var(--red);" id="ms-high-risk">—</div>
+          <div class="ms-sub">Disruption likely</div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-label">Auto-claims triggered</div>
+          <div class="ms-val" style="color:var(--amber);" id="ms-auto-triggered">—</div>
+          <div class="ms-sub">From weather checks</div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-label">Last check</div>
+          <div class="ms-val" style="font-size:16px;font-family:var(--mono);" id="ms-last-check">—</div>
+          <div class="ms-sub">Auto every 15 min</div>
+        </div>
+      </div>
+
+      <!-- City tabs -->
+      <div class="weather-cities-bar" id="weather-city-tabs"></div>
+
+      <!-- City cards grid -->
+      <div class="weather-cards-grid" id="weather-cards-grid">
+        <div style="color:var(--muted);font-size:13px;grid-column:1/-1;padding:20px 0;">Click "Run Weather Check" to fetch live data, or cards will load automatically...</div>
+      </div>
+
+      <!-- ML Risk Scorer -->
+      <div class="ml-card" style="margin-top:8px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:20px;">🧪 Live ML Risk Scorer — test any weather input</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+          <div class="modal-field"><div class="modal-label">Rainfall (mm)</div><input class="modal-input" id="ml-rain" type="number" value="8" min="0" step="0.1"></div>
+          <div class="modal-field"><div class="modal-label">Wind (km/h)</div><input class="modal-input" id="ml-wind" type="number" value="45" min="0"></div>
+          <div class="modal-field"><div class="modal-label">Temperature (°C)</div><input class="modal-input" id="ml-temp" type="number" value="32" min="-10"></div>
+          <div class="modal-field"><div class="modal-label">Humidity (%)</div><input class="modal-input" id="ml-humid" type="number" value="80" min="0" max="100"></div>
+          <div class="modal-field"><div class="modal-label">Condition Code</div><input class="modal-input" id="ml-code" type="number" value="65"></div>
+          <div style="display:flex;align-items:flex-end;"><button class="btn-primary" onclick="runMLTest()" style="width:100%;">Run model →</button></div>
+        </div>
+        <div id="ml-result" style="display:none;">
+          <div style="display:flex;align-items:baseline;gap:12px;">
+            <div class="ml-score-big" id="ml-score-num">—</div>
+            <div style="font-size:13px;color:var(--muted);">claim probability</div>
+            <span class="badge" id="ml-risk-badge">—</span>
+          </div>
+          <div class="ml-bar-wrap"><div style="font-size:11px;font-family:var(--mono);color:var(--muted);margin-bottom:5px;">Risk score</div><div class="ml-bar-track"><div class="ml-bar-fill" id="ml-bar-fill" style="width:0%;background:var(--green);"></div></div></div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:10px;" id="ml-explanation">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ML MODEL ══ -->
+    <div class="panel" id="panel-ml">
+      <div class="panel-header">
+        <div class="panel-eyebrow">Machine learning</div>
+        <div class="panel-title">Claim predictor</div>
+        <div class="panel-sub">Random Forest classifier trained on synthetic weather + claim data. Predicts claim probability from weather inputs.</div>
+      </div>
+      <div class="ml-card">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;">Model architecture</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+          <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Algorithm</div><div style="font-size:14px;font-weight:600;">Random Forest</div></div>
+          <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">n_estimators</div><div style="font-size:14px;font-weight:600;">200 trees</div></div>
+          <div><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Training samples</div><div style="font-size:14px;font-weight:600;">3,000</div></div>
+        </div>
+        <div style="margin-top:20px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;">Input features</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="badge badge-auto">rainfall_mm</span><span class="badge badge-auto">wind_speed_kph</span>
+            <span class="badge badge-auto">temperature_c</span><span class="badge badge-auto">humidity_pct</span>
+            <span class="badge badge-auto">condition_code</span><span class="badge badge-auto">hour_of_day</span>
+            <span class="badge badge-auto">is_weekend</span>
+          </div>
+        </div>
+      </div>
+      <div class="ml-card">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px;">Decision rules</div>
+        <div style="font-size:13px;color:var(--muted);line-height:2;">
+          <div>• If <strong style="color:var(--text)">rainfall ≥ policy threshold</strong> → auto-claim triggered</div>
+          <div>• If <strong style="color:var(--text)">wind ≥ policy threshold</strong> → auto-claim triggered</div>
+          <div>• If <strong style="color:var(--text)">ML score ≥ policy ML threshold</strong> → auto-claim triggered</div>
+          <div>• If <strong style="color:var(--text)">temperature extreme</strong> (min/max thresholds) → auto-claim triggered</div>
+          <div>• Max 1 auto-claim per user per day (deduplication)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ AI ASSISTANT ══ -->
+    <div class="panel" id="panel-ai">
+      <div class="panel-header">
+        <div class="panel-eyebrow">AI Assistant</div>
+        <div class="panel-title">Claude-powered insights</div>
+        <div class="panel-sub">Ask about claim explanations, policy questions, weather risk, or get risk mitigation suggestions.</div>
+      </div>
+      <div class="ai-chat-wrap">
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-bubble ai">👋 Hi! I'm GigSure's AI assistant. I can explain why claims were triggered, answer policy questions, and give weather-based advice. What would you like to know?</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button onclick="quickChat('Why are auto-claims triggered?')" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;">Why are auto-claims triggered?</button>
+          <button onclick="quickChat('How is the payout calculated?')" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;">How is payout calculated?</button>
+          <button onclick="quickChat('Heavy rain forecast tomorrow — what should I advise workers?')" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;">Rain forecast advice</button>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chat-input" placeholder="Ask anything about claims, policies, weather risk..." onkeydown="if(event.key==='Enter') sendChat()">
+          <button class="chat-send" onclick="sendChat()">Send →</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- Review modal -->
+<div class="modal-bg" id="review-modal">
+  <div class="modal">
+    <div class="modal-title" id="review-modal-title">Review claim</div>
+    <div class="modal-field">
+      <div class="modal-label">Review note (optional)</div>
+      <textarea class="modal-input" id="review-note" rows="3" placeholder="Add a note for the claimant..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeReviewModal()">Cancel</button>
+      <button class="btn-reject" onclick="submitReview('reject')">❌ Reject</button>
+      <button class="btn-primary" onclick="submitReview('approve')">✅ Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- Policy modal -->
+<div class="modal-bg" id="policy-modal">
+  <div class="modal">
+    <div class="modal-title">Create policy</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="modal-field" style="grid-column:1/-1"><div class="modal-label">Policy name</div><input class="modal-input" id="p-name" placeholder="e.g. Monsoon Pro Cover"></div>
+      <div class="modal-field"><div class="modal-label">Max payout (₹)</div><input class="modal-input" id="p-payout" type="number" value="1200"></div>
+      <div class="modal-field"><div class="modal-label">Payout % of loss</div><input class="modal-input" id="p-pct" type="number" value="80" min="0" max="100"></div>
+      <div class="modal-field"><div class="modal-label">Monthly premium (₹)</div><input class="modal-input" id="p-premium" type="number" value="129"></div>
+      <div class="modal-field"><div class="modal-label">Rainfall threshold (mm)</div><input class="modal-input" id="p-rain" type="number" value="5" step="0.5"></div>
+      <div class="modal-field"><div class="modal-label">Wind threshold (km/h)</div><input class="modal-input" id="p-wind" type="number" value="50"></div>
+      <div class="modal-field"><div class="modal-label">ML threshold (0–1)</div><input class="modal-input" id="p-ml" type="number" value="0.65" step="0.05" min="0" max="1"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closePolicyModal()">Cancel</button>
+      <button class="btn-primary" onclick="savePolicy()">Create policy →</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════ -->
+<script>
+const USER = JSON.parse(localStorage.getItem('gigsure_user') || '{}');
+document.getElementById('sb-name').textContent = (USER.first_name || '') + ' ' + (USER.last_name || '');
+if (USER.first_name) document.getElementById('insurer-name').textContent = USER.first_name + '.';
+const hr = new Date().getHours();
+document.getElementById('greeting-time').textContent = hr < 12 ? 'morning' : hr < 17 ? 'afternoon' : 'evening';
+
+// ── Panel navigation ──
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.querySelector(`[onclick="showPanel('${name}')"]`).classList.add('active');
+  document.getElementById('panel-title').textContent = {
+    overview:'Overview', claims:'Claims', policies:'Policies',
+    weather:'Weather Monitor', ml:'ML Model', ai:'AI Assistant'
+  }[name];
+  if (name === 'weather') loadWeatherCards();
+}
+
+// ── Toast ──
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  t.style.borderColor = type === 'success' ? 'rgba(107,221,154,0.3)' : 'rgba(224,82,82,0.3)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Logout ──
+function doLogout() {
+  fetch('/api/logout/', { method: 'POST', credentials: 'same-origin' });
+  localStorage.removeItem('gigsure_user');
+  window.location.href = '/login/';
+}
+
+// ── Run Weather Check ── (connects to backend OR mocks if unavailable)
+async function triggerMonitor() {
+  const btn = document.getElementById('weather-check-btn');
+  btn.textContent = '⏳ Checking...';
+  btn.style.pointerEvents = 'none';
+
+  // Show weather panel and running indicator
+  showPanel('weather');
+  document.getElementById('weather-check-indicator').classList.add('show');
+
+  const steps = [
+    'Fetching live data for all cities...',
+    'Running ML risk model...',
+    'Checking policy thresholds...',
+    'Looking for auto-claim triggers...',
+    'Done.',
+  ];
+
+  for (let i = 0; i < steps.length; i++) {
+    document.getElementById('wc-progress-text').textContent = steps[i];
+    await sleep(700);
+  }
+
+  try {
+    const r = await fetch('/api/insurer/monitor/trigger/', { method: 'POST', credentials: 'same-origin' });
+    const d = await r.json();
+    toast(d.message || 'Weather check complete.');
+    loadAnalytics();
+  } catch(e) {
+    // Backend unavailable — still show mock weather data
+    toast('Weather check complete (demo mode).');
+  }
+
+  document.getElementById('weather-check-indicator').classList.remove('show');
+  document.getElementById('ms-last-check').textContent = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+  btn.textContent = '⚡ Run Weather Check';
+  btn.style.pointerEvents = '';
+
+  loadWeatherCards();
+  loadAnalytics();
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── Analytics ──
+async function loadAnalytics() {
+  try {
+    const r = await fetch('/api/insurer/analytics/', { credentials: 'same-origin' });
+    const d = await r.json();
+    document.getElementById('s-total').textContent   = d.total;
+    document.getElementById('s-pending').textContent = d.pending;
+    document.getElementById('s-auto').textContent    = d.auto_claims;
+    document.getElementById('s-payout').textContent  = '₹' + Math.round(d.total_payout).toLocaleString('en-IN');
+    document.getElementById('av-auto').textContent   = d.auto_claims;
+    document.getElementById('av-manual').textContent = d.manual_claims;
+    document.getElementById('disruptions-24h').textContent = d.disruptions_24h;
+
+    const cb = document.getElementById('city-breakdown');
+    if (d.city_breakdown.length === 0) {
+      cb.innerHTML = '<span style="color:var(--muted);font-size:13px;">No claims yet.</span>';
+    } else {
+      cb.innerHTML = d.city_breakdown.map(c =>
+        `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:13px;">${c.city}</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--green);">${c.count}</span>
+        </div>`
+      ).join('');
+    }
+
+    // Update monitor summary
+    document.getElementById('ms-auto-triggered').textContent = d.auto_claims;
+  } catch(e) {
+    // Fallback: read from localStorage claims
+    const localClaims = JSON.parse(localStorage.getItem('gigsure_claims') || '[]');
+    const pending = localClaims.filter(c => c.status === 'pending').length;
+    const total   = localClaims.length;
+    const auto    = localClaims.filter(c => c.source === 'auto').length;
+    const manual  = total - auto;
+    document.getElementById('s-total').textContent   = total;
+    document.getElementById('s-pending').textContent = pending;
+    document.getElementById('s-auto').textContent    = auto;
+    document.getElementById('av-auto').textContent   = auto;
+    document.getElementById('av-manual').textContent = manual;
+    document.getElementById('ms-auto-triggered').textContent = auto;
+
+    // City breakdown from localStorage
+    const cities = {};
+    localClaims.forEach(c => { cities[c.city] = (cities[c.city] || 0) + 1; });
+    const sorted = Object.entries(cities).sort((a,b)=>b[1]-a[1]);
+    const cb = document.getElementById('city-breakdown');
+    if (!sorted.length) {
+      cb.innerHTML = '<span style="color:var(--muted);font-size:13px;">No claims yet.</span>';
+    } else {
+      cb.innerHTML = sorted.map(([city, count]) =>
+        `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:13px;">${city}</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--green);">${count}</span>
+        </div>`
+      ).join('');
+    }
+  }
+}
+
+// ── Claims ──
+let allClaims = [];
+
+async function loadClaims(params = '') {
+  try {
+    const r = await fetch('/api/insurer/claims/' + (params ? '?' + params : ''), { credentials: 'same-origin' });
+    const d = await r.json();
+    allClaims = d.claims || [];
+  } catch(e) {
+    // Fallback: localStorage claims
+    allClaims = JSON.parse(localStorage.getItem('gigsure_claims') || '[]');
+    if (params) {
+      const [key, val] = params.split('=');
+      if (key === 'status') allClaims = allClaims.filter(c => c.status === val);
+      if (key === 'source') allClaims = allClaims.filter(c => c.source === val);
+    }
+  }
+  renderClaims(allClaims);
+  updateClaimBadge();
+}
+
+function updateClaimBadge() {
+  const pending = allClaims.filter(c => c.status === 'pending').length;
+  const badge   = document.getElementById('claims-badge');
+  if (pending > 0) { badge.textContent = pending; badge.classList.add('show'); }
+  else badge.classList.remove('show');
+}
+
+function renderClaims(claims) {
+  const tbody = document.getElementById('claims-tbody');
+  if (!claims.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px;">No claims found.</td></tr>';
+    return;
+  }
+  const disruptionLabel = t => t ? t.replace(/_/g,' ').replace(/\b\w/g, l => l.toUpperCase()) : '—';
+  tbody.innerHTML = claims.map(c => `
+    <tr>
+      <td><span style="font-family:var(--mono);font-size:12px;color:var(--green);">${c.claim_id}</span></td>
+      <td style="font-size:12px;">${c.claimant_email || '—'}</td>
+      <td>${c.city || '—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--muted);">${c.incident_date || '—'}</td>
+      <td><span class="badge ${c.source === 'auto' ? 'badge-auto' : 'badge-manual'}">${c.source === 'auto' ? '🤖 Auto' : '✍️ Manual'}</span></td>
+      <td style="font-size:12px;">${disruptionLabel(c.disruption_type)}</td>
+      <td style="font-family:var(--mono);color:var(--green);">₹${Math.round(c.payout || c.payout_amount || 0).toLocaleString('en-IN')}</td>
+      <td><span class="badge badge-${c.status}">${(c.status||'pending').toUpperCase()}</span></td>
+      <td>
+        ${c.status === 'pending' ? `
+          <button class="action-btn btn-approve" onclick="openReviewModal(${c.id || JSON.stringify(c.claim_id)}, 'approve')">✅</button>
+          <button class="action-btn btn-reject"  onclick="openReviewModal(${c.id || JSON.stringify(c.claim_id)}, 'reject')">❌</button>
+        ` : `<button class="action-btn btn-view" onclick="viewClaimDetail(${JSON.stringify(c.claim_id)})">View</button>`}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterClaims(status, btn) {
+  document.querySelectorAll('.filters-bar .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadClaims(status ? 'status=' + status : '');
+}
+function filterClaimsBySource(source, btn) {
+  document.querySelectorAll('.filters-bar .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadClaims('source=' + source);
+}
+function refreshClaims(btn) {
+  document.querySelectorAll('.filters-bar .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadClaims();
+  setTimeout(() => btn.classList.remove('active'), 1500);
+}
+
+// ── Review modal (supports both DB id and localStorage claim_id) ──
+let pendingReviewId = null; let pendingAction = null;
+
+function openReviewModal(id, action) {
+  pendingReviewId = id; pendingAction = action;
+  document.getElementById('review-modal-title').textContent = action === 'approve' ? '✅ Approve claim' : '❌ Reject claim';
+  document.getElementById('review-modal').classList.add('show');
+}
+function closeReviewModal() {
+  document.getElementById('review-modal').classList.remove('show');
+  document.getElementById('review-note').value = '';
+}
+async function submitReview(action) {
+  const note = document.getElementById('review-note').value;
+  const id   = pendingReviewId;
+  try {
+    if (typeof id === 'number') {
+      // Backend review
+      const r = await fetch(`/api/insurer/claims/${id}/review/`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, note }), credentials: 'same-origin',
+      });
+      const d = await r.json();
+      if (!d.success) { toast(d.error || 'Error.', 'error'); return; }
+    } else {
+      // localStorage review
+      const claims = JSON.parse(localStorage.getItem('gigsure_claims') || '[]');
+      const idx = claims.findIndex(c => c.claim_id === id);
+      if (idx !== -1) {
+        claims[idx].status = action === 'approve' ? 'approved' : 'rejected';
+        claims[idx].review_note = note;
+        localStorage.setItem('gigsure_claims', JSON.stringify(claims));
+      }
+    }
+    toast(`Claim ${action === 'approve' ? 'approved' : 'rejected'} successfully.`);
+    closeReviewModal();
+    loadClaims();
+    loadAnalytics();
+  } catch(e) { toast('Network error.', 'error'); }
+}
+
+function viewClaimDetail(claimId) {
+  const c = allClaims.find(x => (x.id === claimId || x.claim_id === claimId));
+  if (!c) return;
+  const info = [
+    `Claim: ${c.claim_id}`, `Status: ${c.status}`,
+    `Disruption: ${c.disruption_type}`,
+    `Expected: ₹${c.expected || c.expected_earnings || '—'}`,
+    `Actual: ₹${c.actual || c.actual_earnings || '—'}`,
+    `Loss: ₹${c.loss || '—'} | Payout: ₹${c.payout || c.payout_amount || '—'}`,
+    c.ai_reasoning ? `AI: ${c.ai_reasoning}` : '',
+    c.review_note  ? `Review note: ${c.review_note}` : '',
+  ].filter(Boolean).join('\n');
+  alert(info);
+}
+
+// ══════════════════════════════════════
+// POLICIES — with preloaded sample data
+// ══════════════════════════════════════
+const SAMPLE_POLICIES = [
+  {
+    id: 'sample-1', name: 'Monsoon Basic Cover',
+    description: 'Essential rain cover for entry-level gig workers',
+    max_payout: 500, payout_pct: 75, premium: 49,
+    rainfall_threshold: 8, wind_threshold: 60, ml_threshold: 0.55,
+    is_active: true, beneficiary_count: 0, is_sample: true,
+  },
+  {
+    id: 'sample-2', name: 'High Risk Weather Cover',
+    description: 'For workers in flood-prone or storm-affected zones',
+    max_payout: 1800, payout_pct: 85, premium: 199,
+    rainfall_threshold: 3, wind_threshold: 40, ml_threshold: 0.45,
+    is_active: true, beneficiary_count: 0, is_sample: true,
+  },
+  {
+    id: 'sample-3', name: 'Premium Gig Protection',
+    description: 'Full-spectrum protection: rain, outages, shutdowns, heat',
+    max_payout: 2500, payout_pct: 90, premium: 299,
+    rainfall_threshold: 2, wind_threshold: 35, ml_threshold: 0.40,
+    is_active: true, beneficiary_count: 0, is_sample: true,
+  },
+];
+
+async function loadPolicies() {
+  const grid = document.getElementById('policy-grid');
+  let backendPolicies = [];
+  try {
+    const r = await fetch('/api/policies/', { credentials: 'same-origin' });
+    const d = await r.json();
+    backendPolicies = d.policies || [];
+  } catch(e) { /* backend unavailable */ }
+
+  // Merge: backend policies first, then samples only if no backend ones exist
+  const policies = backendPolicies.length > 0 ? backendPolicies : SAMPLE_POLICIES;
+  if (!policies.length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:13px;">No policies yet. Create your first one.</div>';
+    return;
+  }
+
+  grid.innerHTML = policies.map(p => {
+    const isSample = p.is_sample || false;
+    return `
+    <div class="policy-card ${isSample ? 'sample-card' : ''}">
+      <div class="policy-card-header">
+        <div>
+          <div class="policy-name">${p.name}</div>
+          <div class="policy-meta">${p.description || (p.beneficiary_count + ' beneficiar' + (p.beneficiary_count !== 1 ? 'ies' : 'y'))} · ₹${p.premium}/mo</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <span class="badge ${p.is_active ? 'badge-approved' : 'badge-rejected'}">${p.is_active ? 'Active' : 'Inactive'}</span>
+          ${isSample ? '<span class="badge badge-auto" style="font-size:9px;">SAMPLE</span>' : ''}
+        </div>
+      </div>
+      <div class="threshold-row"><span class="threshold-label">Max payout</span><span class="threshold-val">₹${p.max_payout}</span></div>
+      <div class="threshold-row"><span class="threshold-label">Payout %</span><span class="threshold-val">${p.payout_pct}%</span></div>
+      <div class="threshold-row"><span class="threshold-label">🌧️ Rain threshold</span><span class="threshold-val">≥ ${p.rainfall_threshold} mm</span></div>
+      <div class="threshold-row"><span class="threshold-label">💨 Wind threshold</span><span class="threshold-val">≥ ${p.wind_threshold} km/h</span></div>
+      <div class="threshold-row"><span class="threshold-label">🤖 ML threshold</span><span class="threshold-val">≥ ${(p.ml_threshold*100).toFixed(0)}%</span></div>
+      <div style="margin-top:14px;display:flex;gap:8px;">
+        ${!isSample
+          ? `<button class="action-btn btn-reject" onclick="deletePolicy(${p.id})">Delete</button>`
+          : `<button class="action-btn btn-view" onclick="adoptSamplePolicy(${JSON.stringify(p.name)}, ${p.max_payout}, ${p.payout_pct}, ${p.premium}, ${p.rainfall_threshold}, ${p.wind_threshold}, ${p.ml_threshold})">Adopt policy →</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function adoptSamplePolicy(name, max_payout, pct, premium, rain, wind, ml) {
+  document.getElementById('p-name').value    = name;
+  document.getElementById('p-payout').value  = max_payout;
+  document.getElementById('p-pct').value     = pct;
+  document.getElementById('p-premium').value = premium;
+  document.getElementById('p-rain').value    = rain;
+  document.getElementById('p-wind').value    = wind;
+  document.getElementById('p-ml').value      = ml;
+  openNewPolicyModal();
+}
+
+function openNewPolicyModal() { document.getElementById('policy-modal').classList.add('show'); }
+function closePolicyModal()   { document.getElementById('policy-modal').classList.remove('show'); }
+
+async function savePolicy() {
+  const payload = {
+    name:               document.getElementById('p-name').value,
+    max_payout:         +document.getElementById('p-payout').value,
+    payout_pct:         +document.getElementById('p-pct').value,
+    premium:            +document.getElementById('p-premium').value,
+    rainfall_threshold: +document.getElementById('p-rain').value,
+    wind_threshold:     +document.getElementById('p-wind').value,
+    ml_threshold:       +document.getElementById('p-ml').value,
+  };
+  try {
+    const r = await fetch('/api/policies/create/', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload), credentials: 'same-origin',
+    });
+    const d = await r.json();
+    if (d.success) { toast('Policy created!'); closePolicyModal(); loadPolicies(); }
+    else toast(d.error || 'Error.', 'error');
+  } catch(e) { toast('Network error.', 'error'); }
+}
+
+async function deletePolicy(id) {
+  if (!confirm('Delete this policy?')) return;
+  const r = await fetch(`/api/policies/${id}/delete/`, { method: 'POST', credentials: 'same-origin' });
+  const d = await r.json();
+  if (d.success) { toast('Policy deleted.'); loadPolicies(); }
+}
+
+// ══════════════════════════════════════
+// IMPROVED WEATHER MONITOR
+// ══════════════════════════════════════
+const CITIES = [
+  { name: 'Vadodara', lat: 22.3072, lon: 72.1851 },
+  { name: 'Bengaluru', lat: 12.9716, lon: 77.5946 },
+  { name: 'Mumbai', lat: 19.0760, lon: 72.8777 },
+  { name: 'Delhi', lat: 28.6139, lon: 77.2090 },
+  { name: 'Chennai', lat: 13.0827, lon: 80.2707 },
+];
+
+let weatherData = {}; // city → weather object
+
+async function fetchCityWeather(city) {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=precipitation,weathercode,windspeed_10m,temperature_2m,relative_humidity_2m&timezone=Asia%2FKolkata`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const c = data.current;
+    const rain  = c.precipitation || 0;
+    const wind  = c.windspeed_10m || 0;
+    const temp  = c.temperature_2m || 28;
+    const humid = c.relative_humidity_2m || 60;
+    const code  = c.weathercode || 0;
+
+    // Simple risk calc
+    let riskScore = 0;
+    if (rain > 10) riskScore += 40; else if (rain > 3) riskScore += 20;
+    if (wind > 60) riskScore += 30; else if (wind > 40) riskScore += 15;
+    if (temp > 42) riskScore += 20; else if (temp < 8) riskScore += 20;
+    if (code >= 80) riskScore += 20; else if (code >= 51) riskScore += 10;
+    riskScore = Math.min(100, riskScore);
+
+    const riskLevel = riskScore >= 60 ? 'high' : riskScore >= 30 ? 'medium' : 'low';
+    const isDisruption = riskLevel !== 'low';
+
+    return { name: city.name, rain, wind, temp, humid, code, riskScore, riskLevel, isDisruption,
+             condition: weatherCodeLabel(code), icon: weatherIcon(code, rain, wind), timestamp: new Date() };
+  } catch(e) {
+    // Mock data fallback
+    const mockRain  = Math.random() * 25;
+    const mockWind  = 20 + Math.random() * 50;
+    const mockTemp  = 22 + Math.random() * 20;
+    const humid     = 50 + Math.random() * 40;
+    let riskScore = 0;
+    if (mockRain > 10) riskScore += 40; else if (mockRain > 3) riskScore += 20;
+    if (mockWind > 60) riskScore += 30; else if (mockWind > 40) riskScore += 15;
+    const riskLevel = riskScore >= 60 ? 'high' : riskScore >= 30 ? 'medium' : 'low';
+    return { name: city.name, rain: +mockRain.toFixed(1), wind: +mockWind.toFixed(0),
+             temp: +mockTemp.toFixed(1), humid: +humid.toFixed(0), code: 0,
+             riskScore, riskLevel, isDisruption: riskLevel !== 'low',
+             condition: riskLevel === 'high' ? 'Heavy Rain' : riskLevel === 'medium' ? 'Showers' : 'Partly Cloudy',
+             icon: riskLevel === 'high' ? '⛈️' : riskLevel === 'medium' ? '🌦️' : '⛅',
+             timestamp: new Date() };
+  }
+}
+
+function weatherCodeLabel(code) {
+  if (code <= 20) return 'Clear / Cloudy'; if (code <= 49) return 'Fog';
+  if (code <= 59) return 'Drizzle'; if (code <= 69) return 'Rain';
+  if (code <= 79) return 'Snow'; if (code <= 84) return 'Rain Showers';
+  if (code <= 99) return 'Thunderstorm'; return 'Unknown';
+}
+function weatherIcon(code, rain, wind) {
+  if (code >= 95) return '⛈️';
+  if (code >= 80) return '🌧️';
+  if (code >= 51) return '🌦️';
+  if (code >= 45) return '🌫️';
+  if (rain > 5)   return '🌧️';
+  if (wind > 50)  return '💨';
+  return '⛅';
+}
+
+async function loadWeatherCards() {
+  const grid = document.getElementById('weather-cards-grid');
+  const tabs  = document.getElementById('weather-city-tabs');
+  grid.innerHTML = '<div style="color:var(--muted);font-size:13px;grid-column:1/-1;padding:20px 0;">Fetching live weather data...</div>';
+  tabs.innerHTML = '';
+
+  // Fetch all cities concurrently
+  const results = await Promise.all(CITIES.map(fetchCityWeather));
+  results.forEach(w => { weatherData[w.name] = w; });
+
+  // Update summary
+  const highRisk = results.filter(w => w.riskLevel === 'high').length;
+  document.getElementById('ms-high-risk').textContent = highRisk;
+  document.getElementById('ms-last-check').textContent = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+
+  // Render city tabs
+  tabs.innerHTML = results.map((w, i) => `
+    <button class="city-tab ${i===0?'active':''}" onclick="scrollToCard('${w.name}', this)">
+      <div class="city-risk-dot ${w.riskLevel}"></div>
+      ${w.icon} ${w.name}
+    </button>
+  `).join('');
+
+  // Render cards
+  grid.innerHTML = results.map(w => `
+    <div class="weather-city-card risk-${w.riskLevel}" id="wcard-${w.name.replace(/\s+/g,'')}">
+      <div class="card-glow"></div>
+      <div class="wc-city-row">
+        <div>
+          <div class="wc-city-name">${w.name}</div>
+          <div class="wc-condition">${w.condition}</div>
+        </div>
+        <div class="wc-icon">${w.icon}</div>
+      </div>
+      <div class="wc-temp">${w.temp}°C</div>
+      <div class="wc-metrics">
+        <div class="wc-metric">
+          <div class="wc-metric-label">🌧️ Rainfall</div>
+          <div class="wc-metric-val" style="color:${w.rain>8?'var(--red)':w.rain>3?'var(--amber)':'var(--text)'};">${w.rain} mm</div>
+        </div>
+        <div class="wc-metric">
+          <div class="wc-metric-label">💨 Wind</div>
+          <div class="wc-metric-val" style="color:${w.wind>60?'var(--red)':w.wind>40?'var(--amber)':'var(--text)'};">${w.wind} km/h</div>
+        </div>
+        <div class="wc-metric">
+          <div class="wc-metric-label">💧 Humidity</div>
+          <div class="wc-metric-val">${w.humid}%</div>
+        </div>
+        <div class="wc-metric">
+          <div class="wc-metric-label">🕐 Updated</div>
+          <div class="wc-metric-val" style="font-size:11px;">${w.timestamp.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+      </div>
+      <div class="wc-risk-bar-wrap">
+        <div class="wc-risk-label-row">
+          <span>ML Risk Score</span>
+          <strong style="color:${w.riskLevel==='high'?'var(--red)':w.riskLevel==='medium'?'var(--amber)':'var(--green)'};">${w.riskScore}%</strong>
+        </div>
+        <div class="wc-risk-track"><div class="wc-risk-fill" style="width:${w.riskScore}%;"></div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="wc-alert-tag ${w.riskLevel==='high'?'danger':w.riskLevel==='medium'?'caution':'clear'}">
+          ${w.riskLevel==='high'?'<span class="blink">🔴</span> HIGH RISK':w.riskLevel==='medium'?'🟡 CAUTION':'🟢 CLEAR'}
+        </div>
+        ${w.isDisruption ? `<button class="action-btn btn-approve" style="font-size:11px;" onclick="mockAutoClaimFromWeather('${w.name}', '${w.condition}', ${w.rain}, ${w.wind})">⚡ Trigger claim</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function scrollToCard(city, tabEl) {
+  document.querySelectorAll('.city-tab').forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  const card = document.getElementById('wcard-' + city.replace(/\s+/g,''));
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function mockAutoClaimFromWeather(city, condition, rain, wind) {
+  // Create a mock auto-claim in localStorage for demo purposes
+  const claimId = 'GS-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000);
+  const claim = {
+    claim_id: claimId, status: 'pending', source: 'auto',
+    disruption_type: 'heavy_rain', city, platform: 'Auto-detected',
+    incident_date: new Date().toISOString().slice(0,10),
+    expected: 900, actual: 200, loss: 700, payout: 560,
+    payout_amount: 560,
+    ai_reasoning: `Auto-triggered: ${condition} detected. Rain: ${rain}mm, Wind: ${wind}km/h. Exceeds policy thresholds.`,
+    claimant_email: 'auto@gigsure.in',
+    created_at: new Date().toISOString(),
+  };
+  const existing = JSON.parse(localStorage.getItem('gigsure_claims') || '[]');
+  existing.unshift(claim);
+  localStorage.setItem('gigsure_claims', JSON.stringify(existing));
+  toast(`Auto-claim ${claimId} triggered for ${city}!`);
+  loadAnalytics();
+  updateClaimBadge();
+}
+
+// ── ML tester ──
+async function runMLTest() {
+  const payload = {
+    rainfall_mm:    +document.getElementById('ml-rain').value,
+    wind_speed_kph: +document.getElementById('ml-wind').value,
+    temperature_c:  +document.getElementById('ml-temp').value,
+    humidity_pct:   +document.getElementById('ml-humid').value,
+    condition_code: +document.getElementById('ml-code').value,
+  };
+  try {
+    const r = await fetch('/api/ml/risk-score/', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload), credentials: 'same-origin',
+    });
+    const d = await r.json();
+    document.getElementById('ml-result').style.display = 'block';
+    document.getElementById('ml-score-num').textContent = (d.score * 100).toFixed(0) + '%';
+    document.getElementById('ml-explanation').textContent = d.explanation;
+    const bar = document.getElementById('ml-bar-fill');
+    bar.style.width = (d.score * 100) + '%';
+    bar.style.background = d.risk_level === 'high' ? '#e05252' : d.risk_level === 'medium' ? '#f5b942' : '#6bdd9a';
+    const badge = document.getElementById('ml-risk-badge');
+    badge.textContent = d.risk_level.toUpperCase();
+    badge.className = 'badge badge-' + (d.risk_level === 'high' ? 'rejected' : d.risk_level === 'medium' ? 'pending' : 'approved');
+  } catch(e) { toast('ML API error.', 'error'); }
+}
+
+// ── AI chat ──
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  appendChat(msg, 'user');
+  input.value = '';
+  const thinking = appendChat('Thinking...', 'ai');
+  try {
+    const r = await fetch('/api/ai/assistant/', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg }), credentials: 'same-origin',
+    });
+    const d = await r.json();
+    thinking.textContent = d.reply || 'Sorry, no response.';
+  } catch(e) {
+    thinking.textContent = 'AI assistant unavailable. Check your ANTHROPIC_API_KEY in settings.';
+  }
+}
+function quickChat(msg) { document.getElementById('chat-input').value = msg; sendChat(); }
+function appendChat(text, role) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-bubble ' + role;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+// ── Init ──
+loadAnalytics();
+loadClaims();
+loadPolicies();
+
+// Poll for new claims every 30 seconds (for real-time sync)
+setInterval(() => { loadClaims(); loadAnalytics(); }, 30000);
+</script>
+</body>
+</html>

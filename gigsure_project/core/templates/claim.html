@@ -12,310 +12,139 @@
 <style>
   /* ── Automation layer styles ── */
   .auto-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(107,221,154,0.12);
-    border: 1px solid rgba(107,221,154,0.3);
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 11px;
-    font-family: 'Geist Mono', monospace;
-    color: #6bdd9a;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(107,221,154,0.12); border: 1px solid rgba(107,221,154,0.3);
+    border-radius: 20px; padding: 4px 12px; font-size: 11px;
+    font-family: 'Geist Mono', monospace; color: #6bdd9a;
+    font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
   }
-
   .auto-pulse {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #6bdd9a;
-    animation: pulse 1.8s ease-in-out infinite;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #6bdd9a; animation: pulse 1.8s ease-in-out infinite;
   }
-
   @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.4; transform: scale(0.7); }
   }
-
-  /* ── Auto-fill animation ── */
-  .field input.auto-filled,
-  .field select.auto-filled {
+  .field input.auto-filled, .field select.auto-filled {
     border-color: rgba(107,221,154,0.5) !important;
     background: rgba(107,221,154,0.04) !important;
     transition: all 0.4s ease;
   }
-
-  /* ── AI verification panel ── */
   .ai-panel {
-    background: rgba(10,20,15,0.7);
-    border: 1px solid rgba(107,221,154,0.2);
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin: 28px 0;
-    display: none;
+    background: rgba(10,20,15,0.7); border: 1px solid rgba(107,221,154,0.2);
+    border-radius: 12px; padding: 20px 24px; margin: 28px 0; display: none;
   }
-
   .ai-panel.visible { display: block; animation: slideIn 0.35s ease; }
-
   @keyframes slideIn {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-
-  .ai-panel-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-
+  .ai-panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
   .ai-panel-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: rgba(107,221,154,0.12);
-    border: 1px solid rgba(107,221,154,0.25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    flex-shrink: 0;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(107,221,154,0.12); border: 1px solid rgba(107,221,154,0.25);
+    display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
   }
-
-  .ai-panel-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #f0f4f1;
-    font-family: 'Geist', sans-serif;
-  }
-
-  .ai-panel-sub {
-    font-size: 11px;
-    color: #6bdd9a;
-    font-family: 'Geist Mono', monospace;
-  }
-
-  .ai-steps {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
+  .ai-panel-title { font-size: 13px; font-weight: 600; color: #f0f4f1; font-family: 'Geist', sans-serif; }
+  .ai-panel-sub { font-size: 11px; color: #6bdd9a; font-family: 'Geist Mono', monospace; }
+  .ai-steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
   .ai-step {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 12.5px;
-    font-family: 'Geist', sans-serif;
-    color: #8ba899;
-    transition: color 0.3s ease;
+    display: flex; align-items: center; gap: 10px; font-size: 12.5px;
+    font-family: 'Geist', sans-serif; color: #8ba899; transition: color 0.3s ease;
   }
-
   .ai-step.done { color: #6bdd9a; }
   .ai-step.active { color: #f0f4f1; }
-
   .ai-step-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #2a3d32;
-    border: 1.5px solid #3a5a48;
-    flex-shrink: 0;
-    transition: all 0.3s ease;
+    width: 8px; height: 8px; border-radius: 50%; background: #2a3d32;
+    border: 1.5px solid #3a5a48; flex-shrink: 0; transition: all 0.3s ease;
   }
-
   .ai-step.done .ai-step-dot { background: #6bdd9a; border-color: #6bdd9a; }
   .ai-step.active .ai-step-dot { background: transparent; border-color: #6bdd9a; box-shadow: 0 0 0 3px rgba(107,221,154,0.15); animation: pulse 1.2s infinite; }
-
   .ai-reasoning {
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(107,221,154,0.1);
-    font-family: 'Geist Mono', monospace;
-    font-size: 11.5px;
-    color: #6bdd9a;
-    line-height: 1.7;
-    min-height: 20px;
+    margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(107,221,154,0.1);
+    font-family: 'Geist Mono', monospace; font-size: 11.5px; color: #6bdd9a; line-height: 1.7; min-height: 20px;
   }
-
   .ai-verdict {
-    margin-top: 14px;
-    padding: 14px 16px;
-    border-radius: 8px;
-    font-family: 'Geist', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    display: none;
-    align-items: center;
-    gap: 10px;
+    margin-top: 14px; padding: 14px 16px; border-radius: 8px; font-family: 'Geist', sans-serif;
+    font-size: 13px; font-weight: 600; display: none; align-items: center; gap: 10px;
   }
+  .ai-verdict.approved { display: flex; background: rgba(107,221,154,0.1); border: 1px solid rgba(107,221,154,0.3); color: #6bdd9a; }
+  .ai-verdict.flagged  { display: flex; background: rgba(255,180,60,0.08); border: 1px solid rgba(255,180,60,0.3); color: #f5b942; }
 
-  .ai-verdict.approved {
-    display: flex;
-    background: rgba(107,221,154,0.1);
-    border: 1px solid rgba(107,221,154,0.3);
-    color: #6bdd9a;
-  }
-
-  .ai-verdict.flagged {
-    display: flex;
-    background: rgba(255,180,60,0.08);
-    border: 1px solid rgba(255,180,60,0.3);
-    color: #f5b942;
-  }
-
-  /* ── Auto-trigger banner ── */
   .trigger-banner {
     background: linear-gradient(135deg, rgba(107,221,154,0.08), rgba(40,100,70,0.08));
-    border: 1.5px solid rgba(107,221,154,0.35);
-    border-radius: 12px;
-    padding: 18px 20px;
-    margin-bottom: 28px;
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
+    border: 1.5px solid rgba(107,221,154,0.35); border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 28px; display: flex; align-items: flex-start; gap: 14px;
   }
-
   .trigger-icon-box {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: rgba(107,221,154,0.1);
-    border: 1px solid rgba(107,221,154,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
+    width: 40px; height: 40px; border-radius: 10px; background: rgba(107,221,154,0.1);
+    border: 1px solid rgba(107,221,154,0.2); display: flex; align-items: center;
+    justify-content: center; font-size: 18px; flex-shrink: 0;
   }
-
   .trigger-content { flex: 1; }
-
   .trigger-title {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: #f0f4f1;
-    font-family: 'Geist', sans-serif;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    font-size: 13.5px; font-weight: 600; color: #f0f4f1; font-family: 'Geist', sans-serif;
+    margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
   }
-
-  .trigger-body {
-    font-size: 12px;
-    color: #8ba899;
-    font-family: 'Geist', sans-serif;
-    line-height: 1.5;
-  }
-
-  .trigger-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-  }
-
+  .trigger-body { font-size: 12px; color: #8ba899; font-family: 'Geist', sans-serif; line-height: 1.5; }
+  .trigger-actions { display: flex; gap: 8px; margin-top: 12px; }
   .btn-auto-fill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #6bdd9a;
-    color: #0a1a10;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 12px;
-    font-weight: 700;
-    font-family: 'Geist', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 6px; background: #6bdd9a;
+    color: #0a1a10; border: none; border-radius: 8px; padding: 8px 16px;
+    font-size: 12px; font-weight: 700; font-family: 'Geist', sans-serif; cursor: pointer; transition: all 0.2s ease;
   }
-
   .btn-auto-fill:hover { background: #82e8aa; transform: translateY(-1px); }
-
   .btn-manual {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: transparent;
-    color: #8ba899;
-    border: 1px solid rgba(107,221,154,0.2);
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 12px;
-    font-family: 'Geist', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 6px; background: transparent;
+    color: #8ba899; border: 1px solid rgba(107,221,154,0.2); border-radius: 8px;
+    padding: 8px 14px; font-size: 12px; font-family: 'Geist', sans-serif; cursor: pointer; transition: all 0.2s ease;
   }
-
   .btn-manual:hover { color: #f0f4f1; border-color: rgba(107,221,154,0.4); }
-
-  /* ── Auto-submit progress ── */
   .submit-btn.processing {
-    background: rgba(107,221,154,0.12) !important;
-    border: 1px solid rgba(107,221,154,0.3) !important;
-    color: #6bdd9a !important;
-    cursor: not-allowed;
-    pointer-events: none;
+    background: rgba(107,221,154,0.12) !important; border: 1px solid rgba(107,221,154,0.3) !important;
+    color: #6bdd9a !important; cursor: not-allowed; pointer-events: none;
   }
-
-  /* ── Confidence meter ── */
-  .confidence-bar-wrap {
-    margin-top: 12px;
-  }
-
+  .confidence-bar-wrap { margin-top: 12px; }
   .confidence-label-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    font-family: 'Geist Mono', monospace;
-    color: #6bdd9a;
-    margin-bottom: 5px;
+    display: flex; justify-content: space-between; font-size: 11px;
+    font-family: 'Geist Mono', monospace; color: #6bdd9a; margin-bottom: 5px;
   }
-
-  .confidence-track {
-    height: 4px;
-    background: rgba(107,221,154,0.1);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .confidence-fill {
-    height: 100%;
-    background: #6bdd9a;
-    border-radius: 2px;
-    width: 0%;
-    transition: width 1.2s ease;
-  }
-
-  /* ── Weather data strip ── */
-  .weather-strip {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 8px;
-  }
-
+  .confidence-track { height: 4px; background: rgba(107,221,154,0.1); border-radius: 2px; overflow: hidden; }
+  .confidence-fill { height: 100%; background: #6bdd9a; border-radius: 2px; width: 0%; transition: width 1.2s ease; }
+  .weather-strip { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
   .weather-chip {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background: rgba(107,221,154,0.06);
-    border: 1px solid rgba(107,221,154,0.15);
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 11px;
-    font-family: 'Geist Mono', monospace;
-    color: #8ba899;
+    display: flex; align-items: center; gap: 5px; background: rgba(107,221,154,0.06);
+    border: 1px solid rgba(107,221,154,0.15); border-radius: 6px; padding: 4px 10px;
+    font-size: 11px; font-family: 'Geist Mono', monospace; color: #8ba899;
   }
-
   .weather-chip strong { color: #f0f4f1; font-weight: 500; }
+
+  /* ── My claims panel ── */
+  .my-claims-section {
+    margin-top: 40px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.07);
+  }
+  .my-claims-title {
+    font-family: 'Instrument Serif', Georgia, serif; font-size: 22px; color: #f0f4f1;
+    letter-spacing: -0.4px; margin-bottom: 16px;
+  }
+  .claims-list { display: flex; flex-direction: column; gap: 10px; }
+  .claim-item {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 16px 20px; display: flex;
+    justify-content: space-between; align-items: center; gap: 16px;
+  }
+  .claim-item-left { flex: 1; }
+  .claim-item-id { font-family: 'Geist Mono', monospace; font-size: 12px; color: #6bdd9a; margin-bottom: 4px; }
+  .claim-item-meta { font-size: 12px; color: rgba(240,244,241,0.45); }
+  .claim-badge {
+    display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px;
+    font-size: 10.5px; font-family: 'Geist Mono', monospace; font-weight: 500;
+  }
+  .claim-badge.pending  { background: rgba(245,185,66,0.1);  color: #f5b942; border: 1px solid rgba(245,185,66,0.25); }
+  .claim-badge.approved { background: rgba(107,221,154,0.1); color: #6bdd9a; border: 1px solid rgba(107,221,154,0.25); }
+  .claim-badge.rejected { background: rgba(224,82,82,0.1);   color: #e05252; border: 1px solid rgba(224,82,82,0.25); }
+  .claim-item-payout { font-family: 'Geist Mono', monospace; font-size: 14px; color: #6bdd9a; font-weight: 600; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -375,7 +204,7 @@
     <div class="step-pill"><div class="step-num-circle">4</div><span class="step-label">Submit</span></div>
   </div>
 
-  <!-- ── AUTO-TRIGGER BANNER (shown when disruption detected) ── -->
+  <!-- AUTO-TRIGGER BANNER -->
   <div class="trigger-banner" id="triggerBanner" style="display:none;">
     <div class="trigger-icon-box">🌧️</div>
     <div class="trigger-content">
@@ -383,7 +212,7 @@
         Disruption auto-detected
         <span class="auto-badge"><div class="auto-pulse"></div>Live</span>
       </div>
-      <div class="trigger-body" id="triggerDescription">Heavy rainfall detected in Vadodara, GJ. Demand dropped 64% as of 14:30 IST.</div>
+      <div class="trigger-body" id="triggerDescription">Heavy rainfall detected in Vadodara, GJ.</div>
       <div class="weather-strip" id="weatherStrip"></div>
       <div class="trigger-actions">
         <button class="btn-auto-fill" onclick="autoFillAndVerify()">⚡ Auto-fill my claim</button>
@@ -392,7 +221,7 @@
     </div>
   </div>
 
-  <!-- Active weather alert (original, kept for compatibility) -->
+  <!-- Static alert fallback (hidden when banner shows) -->
   <div class="status-banner" id="statusBanner">
     <div class="status-icon">⚠️</div>
     <div class="status-text">
@@ -439,28 +268,28 @@
     <!-- Section 2 -->
     <div class="form-section-label">02 — What disrupted your income?</div>
     <div class="disruption-grid" id="disruptionGrid">
-      <div class="disruption-card selected" onclick="selectDisruption(this)" data-type="Heavy rain">
+      <div class="disruption-card selected" onclick="selectDisruption(this)" data-type="heavy_rain">
         <span class="dc-icon">🌧️</span><div class="dc-label">Heavy rain</div><div class="dc-sub">Weather event</div>
       </div>
-      <div class="disruption-card" onclick="selectDisruption(this)" data-type="Shutdown">
+      <div class="disruption-card" onclick="selectDisruption(this)" data-type="shutdown">
         <span class="dc-icon">🚫</span><div class="dc-label">Shutdown</div><div class="dc-sub">City / area closure</div>
       </div>
-      <div class="disruption-card" onclick="selectDisruption(this)" data-type="Platform outage">
+      <div class="disruption-card" onclick="selectDisruption(this)" data-type="platform_outage">
         <span class="dc-icon">📵</span><div class="dc-label">Platform outage</div><div class="dc-sub">App down / no orders</div>
       </div>
-      <div class="disruption-card" onclick="selectDisruption(this)" data-type="Traffic blockage">
+      <div class="disruption-card" onclick="selectDisruption(this)" data-type="traffic_blockage">
         <span class="dc-icon">🚗</span><div class="dc-label">Traffic blockage</div><div class="dc-sub">Roads blocked</div>
       </div>
-      <div class="disruption-card" onclick="selectDisruption(this)" data-type="Power outage">
-        <span class="dc-icon">⚡</span><div class="dc-label">Power outage</div><div class="dc-sub">Area blackout</div>
+      <div class="disruption-card" onclick="selectDisruption(this)" data-type="extreme_heat">
+        <span class="dc-icon">🌡️</span><div class="dc-label">Extreme heat</div><div class="dc-sub">Too hot to ride</div>
       </div>
-      <div class="disruption-card" onclick="selectDisruption(this)" data-type="Other">
+      <div class="disruption-card" onclick="selectDisruption(this)" data-type="other">
         <span class="dc-icon">🗓️</span><div class="dc-label">Other</div><div class="dc-sub">Describe below</div>
       </div>
     </div>
 
     <!-- Section 3 -->
-    <div class="form-section-label">03 — Incident & loss details</div>
+    <div class="form-section-label">03 — Incident &amp; loss details</div>
     <div class="form-grid">
       <div class="field">
         <label>Date of disruption <span>*</span></label>
@@ -493,7 +322,7 @@
       <div class="upload-sub">Screenshots of earnings, app outage, weather photos · Max 10MB each</div>
     </div>
 
-    <!-- ── AI VERIFICATION PANEL ── -->
+    <!-- AI VERIFICATION PANEL -->
     <div class="ai-panel" id="aiPanel">
       <div class="ai-panel-header">
         <div class="ai-panel-icon">🤖</div>
@@ -502,15 +331,13 @@
           <div class="ai-panel-sub" id="aiPanelSub">Initialising...</div>
         </div>
       </div>
-
       <ul class="ai-steps">
         <li class="ai-step" id="step1"><div class="ai-step-dot"></div>Pulling live weather data for your zone</li>
         <li class="ai-step" id="step2"><div class="ai-step-dot"></div>Cross-referencing platform demand drop</li>
-        <li class="ai-step" id="step3"><div class="ai-step-dot"></div>Validating worker ID & policy coverage</li>
+        <li class="ai-step" id="step3"><div class="ai-step-dot"></div>Validating worker ID &amp; policy coverage</li>
         <li class="ai-step" id="step4"><div class="ai-step-dot"></div>Calculating eligible payout amount</li>
         <li class="ai-step" id="step5"><div class="ai-step-dot"></div>Generating verification report</li>
       </ul>
-
       <div class="confidence-bar-wrap" id="confidenceWrap" style="display:none;">
         <div class="confidence-label-row">
           <span>Confidence score</span>
@@ -518,9 +345,7 @@
         </div>
         <div class="confidence-track"><div class="confidence-fill" id="confidenceFill"></div></div>
       </div>
-
       <div class="ai-reasoning" id="aiReasoning"></div>
-
       <div class="ai-verdict approved" id="verdictApproved">
         ✅ &nbsp;Claim pre-approved · Payout will be released on submission
       </div>
@@ -544,11 +369,21 @@
       </div>
     </div>
 
+    <!-- Error message -->
+    <div id="formError" style="display:none;background:rgba(224,82,82,0.1);border:1px solid rgba(224,82,82,0.3);border-radius:10px;padding:12px 16px;font-size:13px;color:#e05252;margin-bottom:16px;"></div>
+
     <button type="submit" class="submit-btn" id="submitBtn">Submit claim →</button>
     <p class="submit-note">Your data is encrypted and only used to process this claim. DPDP Act compliant.</p>
 
   </form>
-</div>
+
+  <!-- ── MY CLAIMS SECTION ── -->
+  <div class="my-claims-section" id="myClaimsSection" style="display:none;">
+    <div class="my-claims-title">Your submitted claims</div>
+    <div class="claims-list" id="claimsList"></div>
+  </div>
+
+</div><!-- /page-wrap -->
 
 <!-- Success overlay -->
 <div class="success-overlay" id="successOverlay">
@@ -563,39 +398,31 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════
-     AUTOMATION ENGINE
-═══════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════
+     CORE SCRIPTS
+═══════════════════════════════════════════════ -->
 <script>
-/* ──────────────────────────────────────────────────
-   CONFIG — swap these with real API endpoints
-   ────────────────────────────────────────────────── */
+/* ── Config ── */
 const CONFIG = {
-  // Weather detection endpoint (Open-Meteo — free, no key needed)
   weatherApiUrl: (lat, lon) =>
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=precipitation,rain,weathercode,windspeed_10m&timezone=Asia%2FKolkata`,
-
-  // Worker data would normally come from your backend session
-  // For demo purposes we read from localStorage or use defaults
   defaultCity: 'Vadodara',
   defaultLat: 22.3072,
   defaultLon: 72.1851,
-
-  // Anthropic AI verification (called from your backend in production!)
-  // Direct browser calls require a proxy — this simulates the flow
-  aiVerifyEndpoint: '/api/verify-claim/', // Your Django endpoint
+  submitEndpoint: '/api/claims/submit/',
+  myClaimsEndpoint: '/api/claims/mine/',
 };
 
-/* ──────────────────────────────────────────────────
-   STEP 1 — On page load, detect disruptions
-   ────────────────────────────────────────────────── */
+/* ── Init ── */
 document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('incidentDate').valueAsDate = new Date();
   populateWorkerData();
   await detectWeatherDisruption();
-  startPolling(); // keep polling every 5 minutes
+  loadMyClaims();
+  startPolling();
 });
 
+/* ── Pre-fill worker data from localStorage ── */
 function populateWorkerData() {
   try {
     const raw = localStorage.getItem('gigsure_user');
@@ -612,48 +439,33 @@ function populateWorkerData() {
   } catch(e) { /* silent */ }
 }
 
-/* ──────────────────────────────────────────────────
-   STEP 2 — Weather detection via Open-Meteo
-   ────────────────────────────────────────────────── */
+/* ── Weather detection ── */
 let detectedWeatherData = null;
-let disruptionDetected   = false;
+let disruptionDetected  = false;
 
 async function detectWeatherDisruption() {
   try {
-    // Try to get real location; fall back to Vadodara
     const { lat, lon } = await getUserLocation();
     const url = CONFIG.weatherApiUrl(lat, lon);
     const resp = await fetch(url);
     const data = await resp.json();
     const c = data.current;
-
-    // WMO codes 51-99 = precipitation / thunderstorm
-    const isRain  = c.weathercode >= 51;
-    const isBad   = c.precipitation > 1.5 || isRain;
-
+    const isRain = c.weathercode >= 51;
+    const isBad  = c.precipitation > 1.5 || isRain;
     const weatherInfo = {
-      rain_mm:      c.precipitation,
-      wind_kph:     Math.round(c.windspeed_10m),
-      weathercode:  c.weathercode,
-      is_disruption: isBad,
-      label:        weatherCodeLabel(c.weathercode),
-      timestamp:    new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    detectedWeatherData = weatherInfo;
-    disruptionDetected  = isBad;
-
-    if (isBad) showDisruptionBanner(weatherInfo);
-    else hideDisruptionBanner();
-
-  } catch (err) {
-    // Network blocked or geolocation denied — show demo banner
-    console.warn('Weather API unavailable, showing demo trigger.', err);
-    const demo = {
-      rain_mm: 18.4, wind_kph: 38, weathercode: 65,
-      is_disruption: true, label: 'Heavy rain',
+      rain_mm: c.precipitation, wind_kph: Math.round(c.windspeed_10m),
+      weathercode: c.weathercode, is_disruption: isBad,
+      label: weatherCodeLabel(c.weathercode),
       timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
     };
+    detectedWeatherData = weatherInfo;
+    disruptionDetected  = isBad;
+    if (isBad) showDisruptionBanner(weatherInfo);
+    else        hideDisruptionBanner();
+  } catch (err) {
+    const demo = { rain_mm: 18.4, wind_kph: 38, weathercode: 65,
+      is_disruption: true, label: 'Heavy rain',
+      timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) };
     detectedWeatherData = demo;
     disruptionDetected  = true;
     showDisruptionBanner(demo);
@@ -662,13 +474,10 @@ async function detectWeatherDisruption() {
 
 function getUserLocation() {
   return new Promise((resolve) => {
-    if (!navigator.geolocation) {
-      resolve({ lat: CONFIG.defaultLat, lon: CONFIG.defaultLon });
-      return;
-    }
+    if (!navigator.geolocation) { resolve({ lat: CONFIG.defaultLat, lon: CONFIG.defaultLon }); return; }
     navigator.geolocation.getCurrentPosition(
       pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      ()  => resolve({ lat: CONFIG.defaultLat,   lon: CONFIG.defaultLon }),
+      ()  => resolve({ lat: CONFIG.defaultLat, lon: CONFIG.defaultLon }),
       { timeout: 4000 }
     );
   });
@@ -685,50 +494,36 @@ function weatherCodeLabel(code) {
   return 'Unknown';
 }
 
-function startPolling() {
-  setInterval(detectWeatherDisruption, 5 * 60 * 1000); // every 5 min
-}
+function startPolling() { setInterval(detectWeatherDisruption, 5 * 60 * 1000); }
 
-/* ──────────────────────────────────────────────────
-   STEP 3 — Show trigger banner with weather chips
-   ────────────────────────────────────────────────── */
+/* ── Show/hide banner ── */
 function showDisruptionBanner(w) {
   const banner = document.getElementById('triggerBanner');
   const strip  = document.getElementById('weatherStrip');
-  const desc   = document.getElementById('triggerDescription');
-  const sb     = document.getElementById('statusBanner');
-
-  desc.textContent = `${w.label} detected in your zone (${CONFIG.defaultCity}). Demand likely impacted as of ${w.timestamp} IST.`;
-
+  document.getElementById('triggerDescription').textContent =
+    `${w.label} detected in your zone (${CONFIG.defaultCity}). Demand likely impacted as of ${w.timestamp} IST.`;
   strip.innerHTML = `
     <div class="weather-chip">🌧️ Rain <strong>${w.rain_mm} mm</strong></div>
     <div class="weather-chip">💨 Wind <strong>${w.wind_kph} km/h</strong></div>
     <div class="weather-chip">🕐 Detected <strong>${w.timestamp}</strong></div>
     <div class="weather-chip">📍 <strong>${CONFIG.defaultCity}</strong></div>
   `;
-
   banner.style.display = 'flex';
-  sb.style.display = 'none'; // hide old static banner
+  document.getElementById('statusBanner').style.display = 'none';
 }
 
-function hideDisruptionBanner() {
-  document.getElementById('triggerBanner').style.display = 'none';
-}
+function hideDisruptionBanner() { document.getElementById('triggerBanner').style.display = 'none'; }
 
-/* ──────────────────────────────────────────────────
-   STEP 4 — Auto-fill form from detected data
-   ────────────────────────────────────────────────── */
+/* ── Auto-fill + verify ── */
 async function autoFillAndVerify() {
-  // 1. Auto-fill fields with a typewriter-like delay
   const fills = [
-    { id: 'f_city',    val: CONFIG.defaultCity },
-    { id: 'incidentDate', val: new Date().toISOString().slice(0,10) },
-    { id: 'f_time',   val: detectedWeatherData?.timestamp?.replace(' IST','') || '14:30' },
+    { id: 'f_city',           val: CONFIG.defaultCity },
+    { id: 'incidentDate',     val: new Date().toISOString().slice(0,10) },
+    { id: 'f_time',           val: detectedWeatherData?.timestamp?.replace(' IST','') || '14:30' },
     { id: 'expectedEarnings', val: '900' },
     { id: 'actualEarnings',   val: '310' },
     { id: 'f_description',    val: `${detectedWeatherData?.label || 'Heavy rain'} disrupted orders from approximately ${detectedWeatherData?.timestamp || '14:30'} IST. Platform demand dropped significantly in the ${CONFIG.defaultCity} zone. Rainfall recorded at ${detectedWeatherData?.rain_mm || 18} mm. Could not complete planned shifts.` },
   ];
-
   for (const f of fills) {
     await sleep(180);
     const el = document.getElementById(f.id);
@@ -738,33 +533,23 @@ async function autoFillAndVerify() {
     el.dispatchEvent(new Event('input'));
     setTimeout(() => el.classList.remove('auto-filled'), 1800);
   }
-
-  // Select Heavy rain card
   document.querySelectorAll('.disruption-card').forEach(c => {
-    c.classList.toggle('selected', c.dataset.type === 'Heavy rain');
+    c.classList.toggle('selected', c.dataset.type === 'heavy_rain');
   });
-
   updateEstimate();
   document.getElementById('triggerBanner').style.display = 'none';
-
-  // 2. Show AI panel and begin verification
   await sleep(400);
   runAIVerification();
 }
 
-/* ──────────────────────────────────────────────────
-   STEP 5 — AI Verification (calls your Django backend
-   which proxies to Anthropic Claude)
-   ────────────────────────────────────────────────── */
+/* ── AI Verification ── */
 async function runAIVerification() {
   const panel = document.getElementById('aiPanel');
   panel.classList.add('visible');
   document.getElementById('aiPanelSub').textContent = 'Running live checks...';
 
-  const steps = ['step1','step2','step3','step4','step5'];
+  const steps  = ['step1','step2','step3','step4','step5'];
   const delays = [1000, 1400, 1200, 1100, 900];
-
-  // Animate steps sequentially while AI call runs in parallel
   const aiCallPromise = callAIVerifier();
 
   for (let i = 0; i < steps.length; i++) {
@@ -773,13 +558,9 @@ async function runAIVerification() {
     document.getElementById(steps[i]).className = 'ai-step active';
   }
 
-  // Wait for AI response
   const result = await aiCallPromise;
-
-  // Mark last step done
   document.getElementById(steps[steps.length-1]).className = 'ai-step done';
 
-  // Show confidence bar
   const confWrap = document.getElementById('confidenceWrap');
   confWrap.style.display = 'block';
   await sleep(100);
@@ -787,143 +568,264 @@ async function runAIVerification() {
   document.getElementById('confidenceFill').style.width = conf + '%';
   document.getElementById('confidenceVal').textContent = conf + '%';
 
-  // Stream reasoning text
   document.getElementById('aiPanelSub').textContent = 'Verification complete';
   const reasoning = result.reasoning || 'Weather data confirms heavy precipitation. Demand signal corroborates income loss. Policy coverage active. Payout eligible.';
   await typeText('aiReasoning', reasoning, 18);
 
-  // Show verdict
   await sleep(400);
-  if (result.approved) {
-    document.getElementById('verdictApproved').style.display = 'flex';
-  } else {
-    document.getElementById('verdictFlagged').style.display = 'flex';
-  }
+  if (result.approved) document.getElementById('verdictApproved').style.display = 'flex';
+  else                  document.getElementById('verdictFlagged').style.display = 'flex';
 }
 
 async function callAIVerifier() {
-  /* 
-   * In production this hits your Django view:
-   *   POST /api/verify-claim/
-   *   Body: { worker_id, city, disruption_type, expected, actual, weather_data }
-   *
-   * Your Django view then calls the Anthropic API server-side
-   * (never expose the API key to the browser).
-   *
-   * DEMO MODE: we call Anthropic directly via fetch to show the
-   * integration pattern. In prod, move this to your backend.
-   */
   try {
     const payload = buildClaimPayload();
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('/api/ai/assistant/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        system: `You are GigSure's automated claim verification AI. Analyse gig worker income disruption claims. 
-Return ONLY valid JSON with keys: approved (bool), confidence (int 0-100), reasoning (string, 1-2 sentences, factual and concise).
-Approve if: weather data confirms disruption, loss > 15%, policy is active. Flag for review if data is inconsistent or loss seems inflated.`,
-        messages: [{
-          role: 'user',
-          content: `Verify this claim:\n${JSON.stringify(payload, null, 2)}`
-        }]
+        message: `Verify this income disruption claim and respond ONLY with JSON {approved: bool, confidence: int 0-100, reasoning: string 1-2 sentences}:\n${JSON.stringify(payload)}`,
       })
     });
-
-    if (!response.ok) throw new Error('API error ' + response.status);
-
+    if (!response.ok) throw new Error('API error');
     const data = await response.json();
-    const text = data.content?.[0]?.text || '{}';
+    const text = data.reply || '{}';
     const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
-
+    try { return JSON.parse(clean); } catch(e) {
+      // If AI didn't return JSON, parse approval from text
+      const approved = !text.toLowerCase().includes('reject') && !text.toLowerCase().includes('flagg');
+      return { approved, confidence: 84, reasoning: text.substring(0, 200) };
+    }
   } catch (err) {
-    console.warn('AI call failed, using fallback:', err);
-    // Graceful fallback — never break user flow
     return {
       approved: true,
       confidence: 86,
-      reasoning: `Weather records confirm ${detectedWeatherData?.label || 'heavy rain'} in ${CONFIG.defaultCity} at the reported time. Declared income loss of ₹${calcLoss()} is consistent with a 64% demand drop. Policy GS-XXXXXXXX is active and covers weather disruptions.`
+      reasoning: `Weather records confirm ${detectedWeatherData?.label || 'heavy rain'} in ${CONFIG.defaultCity}. Declared income loss of ₹${calcLoss()} is consistent with a 64% demand drop. Coverage is active.`
     };
   }
 }
 
 function buildClaimPayload() {
   return {
-    worker_id:      document.getElementById('f_worker_id').value || 'GS-DEMO',
-    city:           document.getElementById('f_city').value,
-    platform:       document.getElementById('f_platform').value,
-    disruption_type: getSelectedDisruption(),
-    incident_date:  document.getElementById('incidentDate').value,
-    incident_time:  document.getElementById('f_time').value,
+    worker_id:        document.getElementById('f_worker_id').value || 'GS-DEMO',
+    city:             document.getElementById('f_city').value,
+    platform:         document.getElementById('f_platform').value,
+    disruption_type:  getSelectedDisruption(),
+    incident_date:    document.getElementById('incidentDate').value,
+    incident_time:    document.getElementById('f_time').value,
     expected_earnings: parseFloat(document.getElementById('expectedEarnings').value) || 0,
     actual_earnings:   parseFloat(document.getElementById('actualEarnings').value)   || 0,
-    loss_amount:    calcLoss(),
-    payout_amount:  Math.round(calcLoss() * 0.8),
-    description:    document.getElementById('f_description').value,
-    weather_data:   detectedWeatherData,
-    timestamp:      new Date().toISOString(),
+    loss_amount:      calcLoss(),
+    payout_amount:    Math.round(calcLoss() * 0.8),
+    description:      document.getElementById('f_description').value,
+    weather_data:     detectedWeatherData,
+    timestamp:        new Date().toISOString(),
   };
 }
 
-/* ──────────────────────────────────────────────────
-   STEP 6 — Submit
-   ────────────────────────────────────────────────── */
+/* ── SUBMIT — calls Django backend, syncs to localStorage for insurer view ── */
 async function handleSubmit(e) {
   e.preventDefault();
+
   const btn = document.getElementById('submitBtn');
-  btn.textContent = 'Processing...';
+  const errEl = document.getElementById('formError');
+  errEl.style.display = 'none';
+
+  // Basic validation
+  const name     = document.getElementById('f_name').value.trim();
+  const platform = document.getElementById('f_platform').value;
+  const expected = parseFloat(document.getElementById('expectedEarnings').value);
+  const actual   = parseFloat(document.getElementById('actualEarnings').value);
+  const date_val = document.getElementById('incidentDate').value;
+
+  if (!name || !platform || !date_val || isNaN(expected) || isNaN(actual)) {
+    errEl.textContent = '⚠️ Please fill in all required fields before submitting.';
+    errEl.style.display = 'block';
+    errEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+
+  btn.textContent = 'Submitting...';
   btn.classList.add('processing');
 
-  await sleep(800);
+  const aiApproved  = document.getElementById('verdictApproved').style.display !== 'none';
+  const aiConfidence = parseFloat(document.getElementById('confidenceVal').textContent) || null;
+  const aiReasoning  = document.getElementById('aiReasoning').textContent || '';
 
-  const id = 'GS-2026-' + Math.floor(100000 + Math.random() * 900000);
-  document.getElementById('claimId').textContent = 'Claim ID: ' + id;
+  const payload = {
+    disruption_type:   getSelectedDisruption(),
+    city:              document.getElementById('f_city').value || 'Vadodara',
+    platform:          platform,
+    incident_date:     date_val,
+    incident_time:     document.getElementById('f_time').value || null,
+    expected_earnings: expected,
+    actual_earnings:   actual,
+    description:       document.getElementById('f_description').value,
+    ai_confidence:     aiConfidence,
+    ai_reasoning:      aiReasoning,
+    ai_approved:       aiApproved,
+  };
 
-  const approved = document.getElementById('verdictApproved').style.display !== 'none';
-  document.getElementById('successVerdict').textContent = approved
-    ? '🤖 AI pre-approved · Payout in transit'
-    : '🔍 Queued for manual review';
+  try {
+    const resp = await fetch(CONFIG.submitEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
 
-  document.getElementById('successOverlay').classList.add('show');
+    if (!data.success) {
+      errEl.textContent = '❌ ' + (data.error || 'Submission failed. Please try again.');
+      errEl.style.display = 'block';
+      btn.textContent = 'Submit claim →';
+      btn.classList.remove('processing');
+      return;
+    }
+
+    // ── SYNC to localStorage so insurer dashboard can read it live ──
+    syncClaimToLocalStorage({
+      claim_id:       data.claim_id,
+      payout:         data.payout,
+      status:         'pending',
+      source:         'manual',
+      disruption_type: payload.disruption_type,
+      city:           payload.city,
+      platform:       payload.platform,
+      incident_date:  payload.incident_date,
+      expected:       payload.expected_earnings,
+      actual:         payload.actual_earnings,
+      loss:           calcLoss(),
+      ai_confidence:  aiConfidence,
+      ai_reasoning:   aiReasoning,
+      claimant_email: getLocalUser()?.email || '',
+      created_at:     new Date().toISOString(),
+    });
+
+    document.getElementById('claimId').textContent = 'Claim ID: ' + data.claim_id;
+    document.getElementById('successVerdict').textContent = aiApproved
+      ? '🤖 AI pre-approved · Payout in transit'
+      : '🔍 Queued for manual review';
+    document.getElementById('successOverlay').classList.add('show');
+
+    // Refresh my claims list
+    setTimeout(loadMyClaims, 800);
+
+  } catch(err) {
+    // Fallback: generate local claim ID and sync to localStorage
+    const localId = 'GS-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000);
+    syncClaimToLocalStorage({
+      claim_id:       localId,
+      payout:         Math.round(calcLoss() * 0.8),
+      status:         'pending',
+      source:         'manual',
+      disruption_type: getSelectedDisruption(),
+      city:           document.getElementById('f_city').value || 'Vadodara',
+      platform:       platform,
+      incident_date:  date_val,
+      expected:       expected,
+      actual:         actual,
+      loss:           calcLoss(),
+      ai_confidence:  aiConfidence,
+      ai_reasoning:   aiReasoning,
+      claimant_email: getLocalUser()?.email || '',
+      created_at:     new Date().toISOString(),
+    });
+    document.getElementById('claimId').textContent = 'Claim ID: ' + localId;
+    document.getElementById('successVerdict').textContent = aiApproved
+      ? '🤖 AI pre-approved · Payout in transit'
+      : '🔍 Queued for manual review';
+    document.getElementById('successOverlay').classList.add('show');
+  }
 }
 
-/* ──────────────────────────────────────────────────
-   HELPERS
-   ────────────────────────────────────────────────── */
+/* ── localStorage sync helper for insurer dashboard ── */
+function syncClaimToLocalStorage(claim) {
+  try {
+    const existing = JSON.parse(localStorage.getItem('gigsure_claims') || '[]');
+    existing.unshift(claim); // newest first
+    localStorage.setItem('gigsure_claims', JSON.stringify(existing.slice(0, 200)));
+  } catch(e) { /* silent */ }
+}
+
+function getLocalUser() {
+  try { return JSON.parse(localStorage.getItem('gigsure_user')); } catch(e) { return null; }
+}
+
+/* ── Load & render my claims from backend ── */
+async function loadMyClaims() {
+  try {
+    const resp = await fetch(CONFIG.myClaimsEndpoint, { credentials: 'same-origin' });
+    const data = await resp.json();
+    renderMyClaims(data.claims || []);
+  } catch(e) {
+    // Fallback: read from localStorage
+    const local = JSON.parse(localStorage.getItem('gigsure_claims') || '[]');
+    const user  = getLocalUser();
+    const mine  = user ? local.filter(c => c.claimant_email === user.email) : local;
+    renderMyClaims(mine);
+  }
+}
+
+function renderMyClaims(claims) {
+  const section = document.getElementById('myClaimsSection');
+  const list    = document.getElementById('claimsList');
+  if (!claims.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  const disruptionLabels = {
+    heavy_rain:'🌧️ Heavy Rain', flood:'🌊 Flood', storm:'⛈️ Storm',
+    extreme_heat:'🌡️ Extreme Heat', extreme_cold:'❄️ Extreme Cold',
+    shutdown:'🚫 Shutdown', platform_outage:'📵 Platform Outage',
+    traffic_blockage:'🚗 Traffic Blockage', other:'🗓️ Other',
+  };
+  list.innerHTML = claims.map(c => `
+    <div class="claim-item">
+      <div class="claim-item-left">
+        <div class="claim-item-id">${c.claim_id}</div>
+        <div class="claim-item-meta">
+          ${disruptionLabels[c.disruption_type] || c.disruption_type} · ${c.city} · ${c.incident_date}
+          ${c.platform ? '· ' + c.platform : ''}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="claim-badge ${c.status}">${c.status.toUpperCase()}</span>
+        <span class="claim-item-payout">₹${Math.round(c.payout || c.payout_amount || 0).toLocaleString('en-IN')}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── Helpers ── */
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function typeText(elId, text, delay = 20) {
   const el = document.getElementById(elId);
   el.textContent = '';
-  for (const ch of text) {
-    el.textContent += ch;
-    await sleep(delay);
-  }
+  for (const ch of text) { el.textContent += ch; await sleep(delay); }
 }
 
 function calcLoss() {
   const exp = parseFloat(document.getElementById('expectedEarnings').value) || 0;
-  const act = parseFloat(document.getElementById('actualEarnings').value) || 0;
+  const act = parseFloat(document.getElementById('actualEarnings').value)   || 0;
   return Math.max(0, exp - act);
 }
 
 function getSelectedDisruption() {
   const sel = document.querySelector('.disruption-card.selected');
-  return sel ? sel.dataset.type : 'Unknown';
+  return sel ? sel.dataset.type : 'heavy_rain';
 }
 
 function updateEstimate() {
   const exp = parseFloat(document.getElementById('expectedEarnings').value) || 0;
-  const act = parseFloat(document.getElementById('actualEarnings').value) || 0;
+  const act = parseFloat(document.getElementById('actualEarnings').value)   || 0;
   const loss   = Math.max(0, exp - act);
   const payout = Math.round(loss * 0.8);
-  document.getElementById('ebExpected').textContent = exp    ? '₹' + exp    : '₹—';
-  document.getElementById('ebActual').textContent   = act    ? '₹' + act    : '₹—';
-  document.getElementById('ebLoss').textContent     = loss   ? '₹' + loss   : '₹—';
-  document.getElementById('ebPayout').textContent   = payout ? '₹' + payout : '₹—';
-  document.getElementById('estimateAmt').textContent = payout ? '₹' + payout : '₹—';
+  document.getElementById('ebExpected').textContent = exp    ? '₹' + exp.toLocaleString('en-IN')    : '₹—';
+  document.getElementById('ebActual').textContent   = act    ? '₹' + act.toLocaleString('en-IN')    : '₹—';
+  document.getElementById('ebLoss').textContent     = loss   ? '₹' + loss.toLocaleString('en-IN')   : '₹—';
+  document.getElementById('ebPayout').textContent   = payout ? '₹' + payout.toLocaleString('en-IN') : '₹—';
+  document.getElementById('estimateAmt').textContent = payout ? '₹' + payout.toLocaleString('en-IN') : '₹—';
 }
 
 function selectDisruption(el) {
@@ -936,11 +838,12 @@ function resetForm() {
   document.getElementById('claimForm').reset();
   document.getElementById('aiPanel').classList.remove('visible');
   document.getElementById('verdictApproved').style.display = 'none';
-  document.getElementById('verdictFlagged').style.display = 'none';
-  document.getElementById('confidenceWrap').style.display = 'none';
+  document.getElementById('verdictFlagged').style.display  = 'none';
+  document.getElementById('confidenceWrap').style.display  = 'none';
   document.getElementById('aiReasoning').textContent = '';
   document.getElementById('submitBtn').textContent = 'Submit claim →';
   document.getElementById('submitBtn').classList.remove('processing');
+  document.getElementById('formError').style.display = 'none';
   updateEstimate();
   detectWeatherDisruption();
 }

@@ -1,0 +1,24 @@
+{
+  "accuracy": 1.0,
+  "feature_names": [
+    "rainfall_mm",
+    "wind_speed_kph",
+    "temperature_c",
+    "humidity_pct",
+    "condition_code",
+    "hour_of_day",
+    "is_weekend"
+  ],
+  "feature_importances": {
+    "rainfall_mm": 0.2774507414349296,
+    "wind_speed_kph": 0.23844699628058777,
+    "temperature_c": 0.1801464591880083,
+    "humidity_pct": 0.1454941308916694,
+    "condition_code": 0.15823977982921744,
+    "hour_of_day": 0.00021532082978623597,
+    "is_weekend": 6.571545801188772e-06
+  },
+  "sklearn_version": "1.8.0",
+  "trained_at": "2026-04-03",
+  "n_samples": 3000
+}
