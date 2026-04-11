@@ -13,6 +13,7 @@ import os
 import json
 import pickle
 import numpy as np
+from datetime import datetime
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
@@ -251,6 +252,34 @@ def get_model_metadata() -> dict:
         with open(META_PATH) as f:
             return json.load(f)
     return {}
+
+def calculate_fraud_score(claim_data, weather_data, user_history):
+    score = 0
+    reasons = []
+
+    # 1. Weather mismatch
+    if not weather_data.get("is_disruption", False):
+        score += 30
+        reasons.append("No real weather disruption detected")
+
+    # 2. High claim frequency
+    if user_history.get("claims_last_7_days", 0) > 3:
+        score += 25
+        reasons.append("High claim frequency")
+
+    # 3. Unrealistic earnings
+    if claim_data.get("expected_earnings", 0) > 2000:
+        score += 20
+        reasons.append("Unusually high earnings reported")
+
+    # 4. Time anomaly
+    incident_time = claim_data.get("incident_time")
+    if incident_time:
+        if incident_time.hour < 5 or incident_time.hour > 23:
+            score += 10
+            reasons.append("Unusual claim timing")
+
+    return min(score, 100), ", ".join(reasons)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

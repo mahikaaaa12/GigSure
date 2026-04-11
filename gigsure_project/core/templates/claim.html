@@ -577,32 +577,43 @@ async function runAIVerification() {
   else                  document.getElementById('verdictFlagged').style.display = 'flex';
 }
 
-async function callAIVerifier() {
-  try {
-    const payload = buildClaimPayload();
-    const response = await fetch('/api/ai/assistant/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({
-        message: `Verify this income disruption claim and respond ONLY with JSON {approved: bool, confidence: int 0-100, reasoning: string 1-2 sentences}:\n${JSON.stringify(payload)}`,
-      })
-    });
-    if (!response.ok) throw new Error('API error');
-    const data = await response.json();
-    const text = data.reply || '{}';
-    const clean = text.replace(/```json|```/g, '').trim();
-    try { return JSON.parse(clean); } catch(e) {
-      // If AI didn't return JSON, parse approval from text
-      const approved = !text.toLowerCase().includes('reject') && !text.toLowerCase().includes('flagg');
-      return { approved, confidence: 84, reasoning: text.substring(0, 200) };
-    }
-  } catch (err) {
-    return {
-      approved: true,
-      confidence: 86,
-      reasoning: `Weather records confirm ${detectedWeatherData?.label || 'heavy rain'} in ${CONFIG.defaultCity}. Declared income loss of ₹${calcLoss()} is consistent with a 64% demand drop. Coverage is active.`
-    };
+async function callAIVerifier(data) {
+  const res = await fetch("/api/claims/preflight/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+  const result = await res.json();
+
+  // Confidence (inverse fraud)
+  const confidence = 100 - result.fraud_score;
+
+  document.querySelector(".confidence-fill").style.width = confidence + "%";
+  document.querySelector(".ai-reasoning").innerText = result.reasoning_text;
+
+  if (result.decision === "approved") {
+    document.querySelector(".ai-verdict").classList.add("approved");
+  } else {
+    document.querySelector(".ai-verdict").classList.add("flagged");
+  }
+}
+
+async function simulatePayout(claimId) {
+  const statusEl = document.createElement("div");
+  statusEl.innerText = "Processing payment via UPI...";
+  document.body.appendChild(statusEl);
+
+  let res = await fetch(`/api/claims/${claimId}/payout/`);
+  let data = await res.json();
+
+  if (data.status === "processing") {
+    setTimeout(async () => {
+      let final = await fetch(`/api/claims/${claimId}/payout/`);
+      let done = await final.json();
+
+      statusEl.innerText = `₹ Credited ✅ UPI: ${done.upi_id}`;
+    }, 1500);
   }
 }
 

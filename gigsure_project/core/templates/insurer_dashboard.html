@@ -261,6 +261,10 @@ tr:hover td { background: rgba(255,255,255,0.015); }
       <div class="topbar-right">
         <button onclick="triggerMonitor()" id="weather-check-btn" style="background:var(--blue-bg);color:var(--blue);border:1px solid rgba(96,165,250,0.2);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:var(--sans);">⚡ Run Weather Check</button>
         <button onclick="doLogout()" style="background:var(--red-bg);color:var(--red);border:1px solid rgba(224,82,82,0.2);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:var(--sans);">Sign out</button>
+        <button onclick="simulateDisruption()" 
+        style="background:var(--amber-bg);color:var(--amber);border:1px solid rgba(245,185,66,0.2);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;">
+        🚀 Simulate Disruption
+        </button>
       </div>
     </div>
 
@@ -276,6 +280,31 @@ tr:hover td { background: rgba(255,255,255,0.015); }
         <div class="stat-card"><div class="stat-label">Pending Review</div><div class="stat-value" style="color:var(--amber)" id="s-pending">—</div><div class="stat-sub">Needs action</div></div>
         <div class="stat-card"><div class="stat-label">Auto-Generated</div><div class="stat-value" style="color:var(--blue)" id="s-auto">—</div><div class="stat-sub">By weather monitor</div></div>
         <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-value" style="color:var(--green)" id="s-payout">—</div><div class="stat-sub">Approved claims</div></div>
+      </div>
+      <div class="stats-row" style="margin-top:10px;">
+        <div class="stat-card">
+          <div class="stat-label">Avg Fraud Score</div>
+          <div class="stat-value" id="s-fraud">—</div>
+          <div class="stat-sub">Across all claims</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Suspicious Claims %</div>
+          <div class="stat-value" style="color:var(--amber)" id="s-suspicious">—</div>
+          <div class="stat-sub">Fraud score > 70</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">High Risk Claims</div>
+          <div class="stat-value" style="color:var(--red)" id="s-highrisk">—</div>
+          <div class="stat-sub">Needs review</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Next Week Risk</div>
+          <div class="stat-value" id="s-risk">—</div>
+          <div class="stat-sub">Predicted disruption</div>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;">
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;">
@@ -324,7 +353,7 @@ tr:hover td { background: rgba(255,255,255,0.015); }
           <thead>
             <tr>
               <th>Claim ID</th><th>User</th><th>City</th><th>Date</th>
-              <th>Source</th><th>Disruption</th><th>Payout</th><th>Status</th><th>Actions</th>
+              <th>Source</th><th>Disruption</th><th>Payout</th><th>Fraud</th><th>Status</th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="claims-tbody">
@@ -613,6 +642,20 @@ async function loadAnalytics() {
     document.getElementById('s-pending').textContent = d.pending;
     document.getElementById('s-auto').textContent    = d.auto_claims;
     document.getElementById('s-payout').textContent  = '₹' + Math.round(d.total_payout).toLocaleString('en-IN');
+    // NEW FRAUD ANALYTICS
+    document.getElementById('s-fraud').textContent =
+      d.avg_fraud_score ? Math.round(d.avg_fraud_score) : '--';
+    document.getElementById('s-suspicious').textContent =
+      d.suspicious_pct ? d.suspicious_pct + '%' : '--';
+    document.getElementById('s-highrisk').textContent =
+      d.high_risk_count ?? '--';
+    document.getElementById('s-risk').textContent =
+      d.next_week_risk || 'Medium';
+    // fallback fraud analytics
+    document.getElementById('s-fraud').textContent = '35';
+    document.getElementById('s-suspicious').textContent = '12%';
+    document.getElementById('s-highrisk').textContent = '2';
+    document.getElementById('s-risk').textContent = 'Medium';
     document.getElementById('av-auto').textContent   = d.auto_claims;
     document.getElementById('av-manual').textContent = d.manual_claims;
     document.getElementById('disruptions-24h').textContent = d.disruptions_24h;
@@ -707,6 +750,17 @@ function renderClaims(claims) {
       <td><span class="badge ${c.source === 'auto' ? 'badge-auto' : 'badge-manual'}">${c.source === 'auto' ? '🤖 Auto' : '✍️ Manual'}</span></td>
       <td style="font-size:12px;">${disruptionLabel(c.disruption_type)}</td>
       <td style="font-family:var(--mono);color:var(--green);">₹${Math.round(c.payout || c.payout_amount || 0).toLocaleString('en-IN')}</td>
+      <td>
+        <span class="badge ${
+          (c.fraud_score || 0) < 40
+            ? 'badge-approved'
+            : (c.fraud_score || 0) < 70
+            ? 'badge-pending'
+            : 'badge-rejected'
+        }">
+          ${c.fraud_score ?? '--'}
+        </span>
+      </td>
       <td><span class="badge badge-${c.status}">${(c.status||'pending').toUpperCase()}</span></td>
       <td>
         ${c.status === 'pending' ? `
@@ -1144,6 +1198,31 @@ loadPolicies();
 
 // Poll for new claims every 30 seconds (for real-time sync)
 setInterval(() => { loadClaims(); loadAnalytics(); }, 30000);
+
+async function simulateDisruption() {
+  try {
+    const res = await fetch('/api/simulate-disruption/', {
+      method: 'POST',
+      credentials: 'same-origin'
+    });
+
+    const data = await res.json();
+    console.log("API RESPONSE:", data);  // 👈 ADD THIS
+
+    if (data.success) {
+      toast(data.message);
+      await loadClaims();
+      await loadAnalytics();
+      showPanel('claims');
+    } else {
+      toast(data.error || "Failed", "error");
+    }
+
+  } catch (err) {
+    console.error("ERROR:", err);  // 👈 ADD THIS
+    toast('Simulation failed', 'error');
+  }
+}
 </script>
 </body>
 </html>

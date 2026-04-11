@@ -147,7 +147,7 @@ class Claim(models.Model):
     # Location & timing
     city = models.CharField(max_length=100, default='Vadodara')
     platform = models.CharField(max_length=100, blank=True)
-    incident_date = models.DateField()
+    incident_date=timezone.now().date(),
     incident_time = models.TimeField(null=True, blank=True)
 
     # Earnings
@@ -174,8 +174,10 @@ class Claim(models.Model):
     )
 
     description = models.TextField(blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
+    fraud_score = models.IntegerField(null=True, blank=True)
+    ai_decision_reason = models.TextField(blank=True)
 
     class Meta:
         ordering = ['-created_at']

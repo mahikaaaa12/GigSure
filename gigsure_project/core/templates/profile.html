@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClaimGuard | User Profile</title>
+    <title>GigSure | User Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -308,8 +308,66 @@
             border: 1px solid var(--ink-faint);
         }
 
-        .mini-stat-value { font-family: var(--serif); font-size: 1.5rem; color: var(--green); }
+        .mini-stat-value { font-family: var(--serif); font-size: 1.5rem; color: var(--green); transition: color 0.3s; }
         .mini-stat-label { font-size: 0.68rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-top: 2px; }
+
+        @keyframes statBump {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.28); }
+            70%  { transform: scale(0.93); }
+            100% { transform: scale(1); }
+        }
+        .mini-stat.bump .mini-stat-value { animation: statBump 0.45s cubic-bezier(0.23, 1, 0.32, 1); }
+
+        /* Claim / Approve modal overlays */
+        #claimOverlay, #approveOverlay {
+            position: fixed; inset: 0;
+            background: rgba(13,13,13,0.45);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center; align-items: center;
+            z-index: 1001;
+        }
+        #claimOverlay.open, #approveOverlay.open { display: flex; }
+
+        .claim-modal {
+            background: var(--paper);
+            padding: 32px 30px 28px;
+            max-width: 360px; width: 100%;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--ink-faint);
+            box-shadow: var(--shadow-lg);
+            animation: cardIn 0.35s ease-out;
+        }
+        .claim-modal h3 { font-family: var(--serif); font-size: 1.45rem; font-weight: 400; margin-bottom: 6px; }
+        .claim-modal p  { font-size: 0.82rem; color: var(--ink-muted); margin-bottom: 20px; }
+        .claim-field { margin-bottom: 14px; }
+        .claim-field label { display: block; font-size: 0.7rem; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.9px; margin-bottom: 6px; }
+        .claim-field input, .claim-field select {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid var(--ink-faint); border-radius: var(--radius);
+            background: var(--paper-card); font-family: var(--sans); font-size: 0.9rem; color: var(--ink);
+            transition: var(--transition);
+        }
+        .claim-field input:focus, .claim-field select:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px var(--green-pale); }
+        .claim-modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+        .claim-modal-actions .btn-action { flex: 2; padding: 11px; }
+        .claim-modal-actions .btn-outline { flex: 1; margin-top: 0; padding: 11px; }
+
+        /* Approve button on activity items */
+        .approve-btn {
+            font-size: 0.72rem; padding: 3px 9px;
+            border: 1px solid var(--green-pale); border-radius: 4px;
+            background: var(--green-wash); color: var(--green);
+            cursor: pointer; font-family: var(--sans); font-weight: 600;
+            white-space: nowrap; transition: var(--transition);
+        }
+        .approve-btn:hover { background: var(--green); color: white; }
+        .approved-tag {
+            font-size: 0.72rem; padding: 3px 9px;
+            border-radius: 4px; background: var(--green-pale);
+            color: var(--green); font-weight: 600;
+        }
 
         /* Activity */
         .activity-list { list-style: none; }
@@ -549,16 +607,16 @@
 
             <!-- Mini Stats -->
             <div class="mini-stats" id="miniStats">
-                <div class="mini-stat">
-                    <div class="mini-stat-value" id="msClaims">12</div>
+                <div class="mini-stat" id="statClaims">
+                    <div class="mini-stat-value" id="stat-claims">—</div>
                     <div class="mini-stat-label">Claims</div>
                 </div>
-                <div class="mini-stat">
-                    <div class="mini-stat-value" id="msApproved">9</div>
+                <div class="mini-stat" id="statApproved">
+                    <div class="mini-stat-value" id="stat-approved">—</div>
                     <div class="mini-stat-label">Approved</div>
                 </div>
-                <div class="mini-stat">
-                    <div class="mini-stat-value" id="msPayout">$4.2k</div>
+                <div class="mini-stat" id="statPayout">
+                    <div class="mini-stat-value" id="stat-paid">—</div>
                     <div class="mini-stat-label">Paid Out</div>
                 </div>
             </div>
@@ -590,7 +648,7 @@
                     <div class="field">
                         <label>Email Address</label>
                         <div class="data">
-                            <span id="val-email">kotadiasaavi2811@gmail.com</span>
+                            <span id="val-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="157e7a6174717c74667474637c272d2424557278747c793b767a78">[email&#160;protected]</a></span>
                             <button class="edit-btn" onclick="editField('email', 'kotadiasaavi2811@gmail.com')">Edit</button>
                         </div>
                     </div>
@@ -619,35 +677,12 @@
             <!-- Tab: Activity -->
             <div class="tab-pane" id="tab-activity">
                 <ul class="activity-list" id="activityList">
-                    <li class="activity-item">
-                        <div class="activity-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        </div>
-                        <div class="activity-text">Claim <strong>#CLM-9905</strong> submitted — Transit Delay</div>
-                        <div class="activity-date">Apr 02</div>
-                    </li>
-                    <li class="activity-item">
-                        <div class="activity-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                        </div>
-                        <div class="activity-text">Claim <strong>#CLM-9902</strong> approved — $850 payout</div>
-                        <div class="activity-date">Mar 28</div>
-                    </li>
-                    <li class="activity-item">
-                        <div class="activity-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20a6 6 0 00-12 0"/><circle cx="12" cy="10" r="4"/></svg>
-                        </div>
-                        <div class="activity-text">Profile information updated</div>
-                        <div class="activity-date">Mar 15</div>
-                    </li>
-                    <li class="activity-item">
-                        <div class="activity-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        </div>
-                        <div class="activity-text">Claim <strong>#CLM-9902</strong> submitted — Equipment Damage</div>
-                        <div class="activity-date">Mar 24</div>
-                    </li>
+                    <!-- populated by JS -->
                 </ul>
+                <button class="btn-action" style="margin-top:16px;" onclick="openClaimModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Submit New Claim
+                </button>
             </div>
 
             <!-- Tab: Security -->
@@ -694,6 +729,62 @@
             </div>
 
         </div><!-- /card-body -->
+    </div>
+
+    <!-- Approve Modal -->
+    <div id="approveOverlay" onclick="if(event.target===this) closeApproveModal()">
+        <div class="claim-modal">
+            <h3>Approve Claim</h3>
+            <p id="approveModalDesc">Review and enter the approved payout amount.</p>
+
+            <div class="claim-field">
+                <label>Approved Payout Amount (₹)</label>
+                <input type="number" id="approveAmount" placeholder="e.g. 5000" min="1">
+            </div>
+
+            <div class="claim-modal-actions">
+                <button class="btn-action" onclick="confirmApproval()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Confirm Approval
+                </button>
+                <button class="btn-outline" onclick="closeApproveModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Claim Modal -->
+    <div id="claimOverlay" onclick="if(event.target===this) closeClaimModal()">
+        <div class="claim-modal">
+            <h3>Submit a Claim</h3>
+            <p>Fill in the details below. AI will auto-review and may submit on your behalf.</p>
+
+            <div class="claim-field">
+                <label>Claim Type</label>
+                <select id="claimType">
+                    <option value="Transit Delay">Transit Delay</option>
+                    <option value="Equipment Damage">Equipment Damage</option>
+                    <option value="Medical Expense">Medical Expense</option>
+                    <option value="Income Loss">Income Loss</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="claim-field">
+                <label>Amount (₹)</label>
+                <input type="number" id="claimAmount" placeholder="e.g. 5000" min="1">
+            </div>
+            <div class="claim-field">
+                <label>Description</label>
+                <input type="text" id="claimDesc" placeholder="Brief description of incident">
+            </div>
+
+            <div class="claim-modal-actions">
+                <button class="btn-action" onclick="submitClaim('manual')">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 2 15 22 11 12 2 9 22 2"/></svg>
+                    Submit Claim
+                </button>
+                <button class="btn-outline" onclick="closeClaimModal()">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <!-- Password Modal -->
@@ -746,7 +837,7 @@
         <span id="toastMsg"></span>
     </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ── Load User ── */
 const raw = localStorage.getItem("gigsure_user");
 const user = raw ? JSON.parse(raw) : null;
@@ -755,13 +846,263 @@ if (!user) {
     window.location.href = "/login/";
 }
 
+/* ─────────────────────────────────────────
+   STATS ENGINE
+   All stats are persisted in localStorage
+   under "gigsure_stats" separately so they
+   survive profile reloads.
+───────────────────────────────────────── */
+function loadStats() {
+    const defaults = { claims: 0, approved: 0, payout: 0 };
+    try {
+        return Object.assign(defaults, JSON.parse(localStorage.getItem("gigsure_stats") || "{}"));
+    } catch { return defaults; }
+}
+
+function saveStats(s) {
+    localStorage.setItem("gigsure_stats", JSON.stringify(s));
+}
+
+function formatPayout(amount) {
+    if (amount >= 100000) return "₹" + (amount / 100000).toFixed(1) + "L";
+    if (amount >= 1000)   return "₹" + (amount / 1000).toFixed(1)   + "k";
+    return "₹" + amount;
+}
+
+function bumpStat(id) {
+    const card = document.getElementById(id);
+    card.classList.remove("bump");
+    void card.offsetWidth; // reflow
+    card.classList.add("bump");
+    setTimeout(() => card.classList.remove("bump"), 500);
+}
+
+function refreshStatDisplay() {
+    const s = loadStats();
+    document.getElementById("stat-claims").textContent   = s.claims;
+    document.getElementById("stat-approved").textContent = s.approved;
+    document.getElementById("stat-paid").textContent     = formatPayout(s.payout);
+}
+
+/* Called whenever a claim is submitted (manual or AI) */
+function recordClaimSubmitted() {
+    const s = loadStats();
+    s.claims += 1;
+    saveStats(s);
+    refreshStatDisplay();
+    bumpStat("statClaims");
+}
+
+/* Called whenever a claim is approved by the insurer */
+function recordClaimApproved(amountRupees) {
+    const s = loadStats();
+    s.approved += 1;
+    s.payout   += Number(amountRupees) || 0;
+    saveStats(s);
+    refreshStatDisplay();
+    bumpStat("statApproved");
+    bumpStat("statPayout");
+}
+
+/* ── Activity Feed ── */
+function loadActivities() {
+    const defaults = [
+        { id: "CLM-9905", type: "submitted", label: "Transit Delay",    amount: 3200,  date: "Apr 02", approved: false },
+        { id: "CLM-9902", type: "submitted", label: "Equipment Damage", amount: 12500, date: "Mar 28", approved: true  },
+        { id: "CLM-9901", type: "submitted", label: "Income Loss",      amount: 8000,  date: "Mar 15", approved: true  },
+    ];
+    try {
+        const stored = localStorage.getItem("gigsure_activities");
+        return stored ? JSON.parse(stored) : defaults;
+    } catch { return defaults; }
+}
+
+/* On very first load, sync stats from default activity list if stats are at 0 */
+function syncStatsFromActivities() {
+    const s = loadStats();
+    if (s.claims > 0) return; // already seeded, don't double-count
+
+    const list = loadActivities();
+    let claims = 0, approved = 0, payout = 0;
+    list.forEach(item => {
+        if (item.type === "submitted") {
+            claims++;
+            if (item.approved) {
+                approved++;
+                payout += Number(item.amount) || 0;
+            }
+        }
+    });
+    s.claims   = claims;
+    s.approved = approved;
+    s.payout   = payout;
+    saveStats(s);
+}
+
+function saveActivities(list) {
+    localStorage.setItem("gigsure_activities", JSON.stringify(list));
+}
+
+function renderActivities() {
+    const list = loadActivities();
+    const ul   = document.getElementById("activityList");
+    ul.innerHTML = "";
+
+    if (list.length === 0) {
+        ul.innerHTML = `<li style="text-align:center;padding:24px 0;color:var(--ink-muted);font-size:0.85rem;">No claims yet. Submit your first claim below.</li>`;
+        return;
+    }
+
+    list.forEach((item, idx) => {
+        const li = document.createElement("li");
+        li.className = "activity-item";
+
+        let iconSvg, textHtml, actionHtml = "";
+
+        if (item.type === "submitted") {
+            if (item.approved) {
+                // Approved claim
+                iconSvg  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`;
+                textHtml = `Claim <strong>#${item.id}</strong> approved — ${formatPayout(item.amount)} payout`;
+                actionHtml = `<span class="approved-tag">Paid</span>`;
+            } else {
+                // Pending claim
+                iconSvg  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`;
+                textHtml = `Claim <strong>#${item.id}</strong> submitted — ${item.label}`;
+                actionHtml = `<button class="approve-btn" onclick="approveClaim(${idx})">Approve</button>`;
+            }
+        } else {
+            // Profile / other events
+            iconSvg  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20a6 6 0 00-12 0"/><circle cx="12" cy="10" r="4"/></svg>`;
+            textHtml = item.label;
+        }
+
+        li.innerHTML = `
+            <div class="activity-icon">${iconSvg}</div>
+            <div class="activity-text">${textHtml}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                ${item.date ? `<div class="activity-date">${item.date}</div>` : ""}
+                ${actionHtml}
+            </div>`;
+        ul.appendChild(li);
+    });
+}
+
+function approveClaim(idx) {
+    const list = loadActivities();
+    const item = list[idx];
+    if (!item || item.approved) return;
+
+    // Store pending index and open the approve modal
+    window._pendingApproveIdx = idx;
+    document.getElementById("approveModalDesc").textContent =
+        `Claim #${item.id} — ${item.label}. Enter the payout amount to approve.`;
+    document.getElementById("approveAmount").value = item.amount || "";
+    document.getElementById("approveOverlay").classList.add("open");
+    setTimeout(() => document.getElementById("approveAmount").focus(), 100);
+}
+
+function confirmApproval() {
+    const idx = window._pendingApproveIdx;
+    const amt = parseFloat(document.getElementById("approveAmount").value);
+
+    if (!amt || amt <= 0) {
+        document.getElementById("approveAmount").style.borderColor = "var(--red)";
+        document.getElementById("approveAmount").style.boxShadow  = "0 0 0 3px var(--red-pale)";
+        setTimeout(() => {
+            document.getElementById("approveAmount").style.borderColor = "";
+            document.getElementById("approveAmount").style.boxShadow  = "";
+        }, 1200);
+        return;
+    }
+
+    const list = loadActivities();
+    const item = list[idx];
+    item.approved = true;
+    item.amount   = amt;
+    list[idx]     = item;
+    saveActivities(list);
+
+    recordClaimApproved(amt);
+    renderActivities();
+    closeApproveModal();
+    showToast(`Claim #${item.id} approved — ${formatPayout(amt)} paid out`, "success");
+}
+
+function closeApproveModal() {
+    document.getElementById("approveOverlay").classList.remove("open");
+    document.getElementById("approveAmount").value = "";
+    window._pendingApproveIdx = null;
+}
+
+/* ── Claim Modal ── */
+function openClaimModal() {
+    document.getElementById("claimOverlay").classList.add("open");
+}
+
+function closeClaimModal() {
+    document.getElementById("claimOverlay").classList.remove("open");
+}
+
+function submitClaim(source) {
+    const type   = document.getElementById("claimType").value;
+    const amount = parseFloat(document.getElementById("claimAmount").value) || null;
+    const desc   = document.getElementById("claimDesc").value.trim();
+
+    if (!amount || amount <= 0) {
+        showToast("Please enter a valid claim amount", "error");
+        return;
+    }
+
+    const claimNum  = "CLM-" + (9900 + Math.floor(Math.random() * 90 + 10));
+    const today     = new Date();
+    const dateStr   = today.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+
+    const list = loadActivities();
+    list.unshift({
+        id:       claimNum,
+        type:     "submitted",
+        label:    desc || type,
+        amount:   amount,
+        date:     dateStr,
+        approved: false,
+        source:   source,
+    });
+    saveActivities(list);
+
+    recordClaimSubmitted();
+    renderActivities();
+    closeClaimModal();
+
+    // Clear inputs
+    document.getElementById("claimAmount").value = "";
+    document.getElementById("claimDesc").value   = "";
+
+    const by = source === "ai" ? "AI auto-submitted" : "Claim submitted";
+    showToast(`${by}: #${claimNum} (${type})`, "success");
+
+    // Simulate AI auto-approval after 4s (demo)
+    if (source === "ai") {
+        setTimeout(() => {
+            const acts   = loadActivities();
+            const target = acts.findIndex(a => a.id === claimNum);
+            if (target !== -1 && !acts[target].approved) {
+                acts[target].approved = true;
+                saveActivities(acts);
+                recordClaimApproved(amount * 0.85); // 85% payout
+                renderActivities();
+                showToast(`AI approved #${claimNum} — ${formatPayout(amount * 0.85)} payout`, "success");
+            }
+        }, 4000);
+    }
+}
+
 /* ── Apply Role-Based UI ── */
 function loadUserProfile() {
     const role = user.role;
 
     const card = document.getElementById('profileCard');
 
-    // Apply role styling
     if (role === "insurer") {
         card.classList.add('role-insurer');
         document.getElementById('roleBadge').textContent = "Insurer";
@@ -770,28 +1111,26 @@ function loadUserProfile() {
         document.getElementById('roleBadge').textContent = "Beneficiary";
     }
 
-    // Name
     const fullName = (user.first_name || '') + ' ' + (user.last_name || '');
     document.getElementById('userName').textContent = fullName;
     document.getElementById('val-name').textContent = fullName;
 
-    // Email
     document.getElementById('val-email').textContent = user.email || "Not provided";
 
-    // Company (role-based)
     document.getElementById('val-company').textContent =
         role === "insurer"
             ? (user.company_name || "Insurance Provider")
             : (user.company_name || "Not applicable");
 
-    // Niche (role-based)
     document.getElementById('val-niche').textContent =
         role === "insurer" ? "Risk Assessment" : "Gig Worker";
 
-    // Stats (can later connect to backend)
-    document.getElementById('msClaims').textContent = user.claims || "0";
-    document.getElementById('msApproved').textContent = user.approved || "0";
-    document.getElementById('msPayout').textContent = user.payout || "₹0";
+    // Sync stats from activity list on first load, then fetch from API
+    syncStatsFromActivities();
+    loadUserStats(); // fetches /api/user/stats/ → falls back to local on error
+
+    // Render activities
+    renderActivities();
 }
 
 /* ── Inline Edit (persistent) ── */
@@ -866,15 +1205,82 @@ function showToast(msg, type = 'success') {
         info: 'ℹ️',
     };
 
-    icon.innerHTML = icons[type] || icons.info;
+    icon.innerHTML = icons[type] || 'ℹ️';
 
+    t.className = '';
     t.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
-/* ── Init ── */
-window.onload = loadUserProfile;
+/* ── Password Modal ── */
+function openPasswordModal() {
+    document.getElementById('pwdOverlay').style.display = 'flex';
+}
+function closePwdModal() {
+    document.getElementById('pwdOverlay').style.display = 'none';
+}
+
+function togglePwd(id, btn) {
+    const input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function checkStrength(val) {
+    const fill  = document.getElementById('strengthFill');
+    const label = document.getElementById('strengthLabel');
+    let score = 0;
+    if (val.length >= 8)              score++;
+    if (/[A-Z]/.test(val))            score++;
+    if (/[0-9]/.test(val))            score++;
+    if (/[^A-Za-z0-9]/.test(val))     score++;
+    const map = [
+        { w: '0%',   c: 'var(--red)',          t: 'Enter a password' },
+        { w: '25%',  c: 'var(--red)',           t: 'Weak' },
+        { w: '50%',  c: 'var(--amber)',         t: 'Fair' },
+        { w: '75%',  c: 'var(--green-light)',   t: 'Good' },
+        { w: '100%', c: 'var(--green)',         t: 'Strong' },
+    ];
+    fill.style.width      = map[score].w;
+    fill.style.background = map[score].c;
+    label.textContent     = map[score].t;
+}
+
+async function loadUserStats() {
+  try {
+    const res = await fetch('/api/user/stats/', {
+      credentials: 'same-origin'
+    });
+
+    if (!res.ok) throw new Error('API returned ' + res.status);
+
+    const data = await res.json();
+
+    document.getElementById("stat-claims").textContent   = data.total_claims;
+    document.getElementById("stat-approved").textContent = data.approved;
+    document.getElementById("stat-paid").textContent     =
+      "₹" + Number(data.total_paid).toLocaleString("en-IN");
+
+  } catch (err) {
+    // API unavailable — fall back to locally computed stats silently
+    console.warn("loadUserStats: falling back to local stats.", err);
+    refreshStatDisplay();
+  }
+}
+
+function savePassword() {
+    const cur  = document.getElementById('pwdCurrent').value;
+    const nw   = document.getElementById('pwdNew').value;
+    const conf = document.getElementById('pwdConfirm').value;
+    if (!cur || !nw || !conf) { showToast('Please fill all fields', 'error'); return; }
+    if (nw !== conf)           { showToast('Passwords do not match', 'error'); return; }
+    if (nw.length < 8)         { showToast('Password too short', 'error');    return; }
+    showToast('Password updated successfully', 'success');
+    closePwdModal();
+}
+
+/* ── Boot ── */
+window.addEventListener('DOMContentLoaded', loadUserProfile);
 </script>
 </body>
 </html>

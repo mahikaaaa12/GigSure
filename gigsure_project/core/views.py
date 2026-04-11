@@ -29,6 +29,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
 
+from .models import Claim
+from .models import Notification
+from .ml_model import calculate_fraud_score
+import time
+import random
+import uuid
 
 # ══════════════════════════════════════════════════════════════
 # PAGE VIEWS
@@ -219,11 +225,40 @@ def submit_claim(request):
         except Exception:
             pass
  
+    # Mock weather data
+    weather_data = {
+        "is_disruption": True
+    }
+
+    # User history
+    user_history = {
+        "claims_last_7_days": Claim.objects.filter(
+            claimant=request.user,
+            # created_at__gte=timezone.now() - timedelta(days=7)
+        ).count()
+    }
+
+    claim_data = {
+        "expected_earnings": float(expected),
+        "incident_time": timezone.now()
+    }
+
+    # ✅ STEP 1: fraud calculation FIRST
+    fraud_score, reason = calculate_fraud_score(claim_data, weather_data, user_history)
+
+    # ✅ STEP 2: decision
+    if fraud_score < 40:
+        status = "approved"
+    elif fraud_score < 70:
+        status = "pending"
+    else:
+        status = "rejected"
+
+    # ✅ STEP 3: create claim AFTER
     claim = Claim.objects.create(
         claimant=request.user,
         claim_id=claim_id,
         source=Claim.SOURCE_MANUAL,
-        status=Claim.STATUS_PENDING,
         disruption_type=data.get("disruption_type", "heavy_rain"),
         city=data.get("city", "Vadodara"),
         platform=data.get("platform", ""),
@@ -237,9 +272,12 @@ def submit_claim(request):
         ai_confidence=data.get("ai_confidence"),
         ai_reasoning=data.get("ai_reasoning", ""),
         ai_approved=data.get("ai_approved"),
+        fraud_score=fraud_score,            # ✅ now correct
+        ai_decision_reason=reason,          # ✅ now correct
+        status=status                      # ✅ now correct
     )
- 
-    # Notify the claimant that their claim was received
+
+    # Notification
     Notification.objects.create(
         recipient=request.user,
         notif_type=Notification.TYPE_GENERAL,
@@ -247,12 +285,21 @@ def submit_claim(request):
         body=f"Your income protection claim for ₹{claim.payout_amount} has been received and is pending review.",
         claim=claim,
     )
- 
+
+    # ✅ payout simulation
+    payment_status = None
+    if status == "approved":
+        payment_status = "processing"
+        time.sleep(1.5)
+        payment_status = "completed"
+
     return JsonResponse({
-        "success":  True,
-        "claim_id": claim.claim_id,
-        "payout":   float(claim.payout_amount),
-        "status":   claim.status,
+        "success": True,
+        "fraud_score": fraud_score,
+        "decision": status,
+        "reasoning_text": reason,
+        "payment_status": payment_status,
+        "payout": float(payout)
     })
 
 
@@ -751,3 +798,88 @@ def trigger_monitor(request):
         return JsonResponse({"success": True, "message": "Monitor pass complete."})
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)})
+    
+@csrf_exempt
+@require_http_methods(["POST"])
+def preflight_claim(request):
+    data = json.loads(request.body)
+
+    weather_data = {"is_disruption": True}
+
+    user_history = {
+        "claims_last_7_days": Claim.objects.filter(
+            claimant=request.user
+        ).count()
+    }
+
+    fraud_score, reason = calculate_fraud_score(data, weather_data, user_history)
+
+    return JsonResponse({
+        "fraud_score": fraud_score,
+        "decision": "approved" if fraud_score < 40 else "flagged",
+        "reasoning_text": reason
+    })
+
+def payout_status(request, claim_id):
+    key = f"payout_{claim_id}"
+
+    if not request.session.get(key):
+        request.session[key] = "processing"
+        return JsonResponse({"status": "processing"})
+
+    return JsonResponse({
+        "status": "completed",
+        "upi_id": "user@upi"
+    })
+    
+@csrf_exempt
+def simulate_disruption(request):
+    try:
+        print("➡️ Simulate disruption called")  # 👈 add
+
+        cities = ["Vadodara", "Mumbai", "Delhi"]
+        city = random.choice(cities)
+        claim_id = "CLM-" + str(uuid.uuid4())[:8]
+
+        claim = Claim.objects.create(
+            claimant=request.user,
+            disruption_type="heavy_rain",
+            city=city,
+            claim_id=claim_id,
+            expected_earnings=1000,
+            actual_earnings=400,
+            estimated_loss=600,
+            payout_amount=480,
+            status="pending",
+            source="auto"
+        )
+
+        print("✅ Claim created:", claim.id)  # 👈 add
+
+        return JsonResponse({
+            "success": True,
+            "message": "Claim created"
+        })
+
+    except Exception as e:
+        print("❌ SIMULATION ERROR:", str(e))  # 👈 VERY IMPORTANT
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })
+        
+def user_stats(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    claims = Claim.objects.filter(claimant=request.user)
+
+    total_claims = claims.count()
+    approved = claims.filter(status="approved").count()
+    total_paid = sum([c.payout_amount or 0 for c in claims if c.status == "approved"])
+
+    return JsonResponse({
+        "total_claims": total_claims,
+        "approved": approved,
+        "total_paid": total_paid
+    })

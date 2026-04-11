@@ -44,4 +44,8 @@ urlpatterns = [
     # ── Notifications ─────────────────────────────────────────────────
     path("api/notifications/",             views.my_notifications,       name="api-notifications"),
     path("api/notifications/read/",        views.mark_notifications_read, name="api-notifs-read"),
+    path("api/claims/preflight/",          views.preflight_claim),
+    path("api/claims/<int:claim_id>/payout/", views.payout_status),
+    path("api/simulate-disruption/",       views.simulate_disruption),
+    path("api/user/stats/",                views.user_stats),
 ]
