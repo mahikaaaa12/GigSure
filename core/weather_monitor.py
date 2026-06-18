@@ -159,7 +159,7 @@ def _fetch_weather(city: str) -> dict | None:
 def _save_weather_log(weather_data: dict, city: str):
     """Save a WeatherLog record and return it."""
     from core.models import WeatherLog
-    return WeatherLog.objects.create(
+    log = WeatherLog.objects.create(
         city=city,
         latitude=weather_data.get('lat'),
         longitude=weather_data.get('lon'),
@@ -171,6 +171,25 @@ def _save_weather_log(weather_data: dict, city: str):
         condition_text=weather_data['condition_text'],
         condition_code=weather_data['condition_code'],
     )
+    # Dual write to MongoDB
+    try:
+        from core.mongo_models import WeatherLogDocument
+        WeatherLogDocument.objects.create(
+            city=log.city,
+            latitude=log.latitude,
+            longitude=log.longitude,
+            temperature_c=log.temperature_c,
+            feels_like_c=log.feels_like_c,
+            humidity_pct=log.humidity_pct,
+            rainfall_mm=log.rainfall_mm,
+            wind_speed_kph=log.wind_speed_kph,
+            condition_text=log.condition_text,
+            condition_code=log.condition_code,
+            recorded_at=log.recorded_at
+        )
+    except Exception as mongo_err:
+        logger.warning(f"⚠️ WeatherLogDocument creation failed in MongoDB: {mongo_err}")
+    return log
 
 
 def _threshold_exceeded(weather_data: dict, policy, ml_score: float) -> tuple[bool, str]:
@@ -253,6 +272,47 @@ def _maybe_create_auto_claim(user, policy, weather_data: dict, weather_log, ml_s
         weather_log=weather_log,
         description=f"[AUTO] {reason}",
     )
+
+    # Dual write to MongoDB
+    try:
+        from core.mongo_models import UserDocument, PolicyDocument, ClaimDocument, WeatherEvidence
+        claimant_doc = UserDocument.objects.filter(django_id=user.id).first()
+        if not claimant_doc:
+            claimant_doc = UserDocument.objects.create(
+                django_id=user.id,
+                email=user.email,
+                password_hash=user.password,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                role="beneficiary"
+            )
+        policy_doc = PolicyDocument.objects.filter(django_id=policy.id).first()
+        ClaimDocument.objects.create(
+            django_id=claim.id,
+            claim_id=claim.claim_id,
+            claimant_id=claimant_doc,
+            policy_id=policy_doc,
+            source=claim.source,
+            status=claim.status,
+            disruption_type=claim.disruption_type,
+            city=claim.city,
+            incident_date=datetime.datetime.combine(claim.incident_date, datetime.time.min),
+            incident_time=str(claim.incident_time) if claim.incident_time else None,
+            expected_earnings=float(claim.expected_earnings),
+            actual_earnings=float(claim.actual_earnings),
+            estimated_loss=float(claim.estimated_loss),
+            payout_amount=float(claim.payout_amount),
+            ai_decision_reason=claim.ai_reasoning,
+            weather_evidence=WeatherEvidence(
+                temperature_c=weather_log.temperature_c,
+                humidity_pct=weather_log.humidity_pct,
+                rainfall_mm=weather_log.rainfall_mm,
+                wind_speed_kph=weather_log.wind_speed_kph,
+                condition_text=weather_log.condition_text
+            ) if weather_log else None
+        )
+    except Exception as mongo_err:
+        logger.warning(f"⚠️ ClaimDocument auto-claim creation failed in MongoDB: {mongo_err}")
 
     logger.info(f"    ✅ Auto-claim {claim.claim_id} created for {user.email}")
 

@@ -297,8 +297,11 @@
       const data = await res.json();
 
       if (data.success) {
-        // Store user (with role) in localStorage for frontend role-gating
+        // Store user (with role) and token in localStorage
         localStorage.setItem('gigsure_user', JSON.stringify(data.user));
+        localStorage.setItem('gigsure_token', data.token);
+        // Set fallback cookie
+        document.cookie = `gigsure_token=${data.token}; path=/; max-age=${3600*24*7}; samesite=lax`;
         setBtn('login-btn', false, '✓ Welcome back!');
         setTimeout(() => window.location.href = '/dashboard/', 600);
       } else {
@@ -355,6 +358,9 @@
 
       if (data.success) {
         localStorage.setItem('gigsure_user', JSON.stringify(data.user));
+        localStorage.setItem('gigsure_token', data.token);
+        // Set fallback cookie
+        document.cookie = `gigsure_token=${data.token}; path=/; max-age=${3600*24*7}; samesite=lax`;
         setBtn('signup-btn', false, '✓ Account created!');
         setTimeout(() => window.location.href = '/dashboard/', 600);
       } else {
@@ -398,6 +404,9 @@
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
     } catch {}
+    localStorage.removeItem('gigsure_user');
+    localStorage.removeItem('gigsure_token');
+    document.cookie = "gigsure_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; samesite=lax";
     document.getElementById('dashboard').classList.remove('active');
     setBtn('login-btn', false, 'Sign In');
     setBtn('signup-btn', false, 'Create Account');

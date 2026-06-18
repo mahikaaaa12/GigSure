@@ -723,6 +723,7 @@ function applyRoleUI() {
 function doLogout() {
   localStorage.removeItem('gigsure_token');
   localStorage.removeItem('gigsure_user');
+  document.cookie = "gigsure_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; samesite=lax";
   window.location.href = '/login/';
 }
 

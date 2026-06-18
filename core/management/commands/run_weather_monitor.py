@@ -29,9 +29,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['loop']:
-            self.stdout.write(self.style.SUCCESS("🔁 Starting monitor in loop mode..."))
+            self.stdout.write(self.style.SUCCESS("Starting monitor in loop mode..."))
             run_monitor_loop()
         else:
-            self.stdout.write(self.style.SUCCESS("🌦️  Running weather monitor (single pass)..."))
+            self.stdout.write(self.style.SUCCESS("Running weather monitor (single pass)..."))
             run_monitor_once()
-            self.stdout.write(self.style.SUCCESS("✅ Done."))
+            self.stdout.write(self.style.SUCCESS("Done."))

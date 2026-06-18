@@ -147,7 +147,7 @@ class Claim(models.Model):
     # Location & timing
     city = models.CharField(max_length=100, default='Vadodara')
     platform = models.CharField(max_length=100, blank=True)
-    incident_date=timezone.now().date(),
+    incident_date = models.DateField(default=timezone.now)
     incident_time = models.TimeField(null=True, blank=True)
 
     # Earnings

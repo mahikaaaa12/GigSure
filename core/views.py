@@ -14,6 +14,7 @@ Includes:
 import json
 import random
 import string
+import datetime
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -29,12 +30,13 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
 
-from .models import Claim
-from .models import Notification
+from .models import Claim, Notification, Policy, WeatherLog
 from .ml_model import calculate_fraud_score
 import time
 import random
 import uuid
+import jwt
+from .mongo_models import UserDocument, PolicyDocument, ClaimDocument, WeatherLogDocument, WeatherEvidence
 
 # ══════════════════════════════════════════════════════════════
 # PAGE VIEWS
@@ -94,6 +96,18 @@ def _gen_claim_id():
     return "GS-" + str(date.today().year) + "-" + "".join(random.choices(string.digits, k=6))
 
 
+def _generate_jwt(user, role, company=""):
+    payload = {
+        'user_id': user.id,
+        'email': user.email,
+        'role': role,
+        'company': company or '',
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7),
+        'iat': datetime.datetime.utcnow(),
+    }
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
+
 # ══════════════════════════════════════════════════════════════
 # AUTH API  (unchanged from original)
 # ══════════════════════════════════════════════════════════════
@@ -137,7 +151,26 @@ def signup(request):
     auth_login(request, user)
     request.session["role"] = role
     request.session["company"] = company
-    return JsonResponse({"success": True, "user": _user_dict(user, role=role)})
+    
+    # Dual write to MongoDB
+    try:
+        UserDocument.objects.create(
+            django_id=user.id,
+            email=user.email,
+            password_hash=user.password,
+            first_name=first_name,
+            last_name=last_name,
+            role=role,
+            company=company
+        )
+    except Exception as mongo_err:
+        print(f"⚠️ UserDocument creation failed in MongoDB: {mongo_err}")
+
+    # Generate JWT
+    token = _generate_jwt(user, role, company)
+    resp = JsonResponse({"success": True, "token": token, "user": _user_dict(user, role=role)})
+    resp.set_cookie('gigsure_token', token, max_age=3600*24*7, httponly=False, samesite='Lax')
+    return resp
 
 
 @csrf_exempt
@@ -161,7 +194,28 @@ def login(request):
 
     auth_login(request, user)
     request.session["role"] = role
-    return JsonResponse({"success": True, "user": _user_dict(user, role=role)})
+    company = request.session.get("company", "")
+    
+    # Sync UserDocument in MongoDB if missing
+    try:
+        if not UserDocument.objects.filter(django_id=user.id).exists():
+            UserDocument.objects.create(
+                django_id=user.id,
+                email=user.email,
+                password_hash=user.password,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                role=role,
+                company=company
+            )
+    except Exception as mongo_err:
+        print(f"⚠️ UserDocument sync failed in MongoDB: {mongo_err}")
+
+    # Generate JWT
+    token = _generate_jwt(user, role, company)
+    resp = JsonResponse({"success": True, "token": token, "user": _user_dict(user, role=role)})
+    resp.set_cookie('gigsure_token', token, max_age=3600*24*7, httponly=False, samesite='Lax')
+    return resp
 
 
 def me(request):
@@ -276,6 +330,38 @@ def submit_claim(request):
         ai_decision_reason=reason,          # ✅ now correct
         status=status                      # ✅ now correct
     )
+    # Dual write to MongoDB Atlas (Claim)
+    try:
+        claimant_doc = UserDocument.objects.filter(django_id=request.user.id).first()
+        if not claimant_doc:
+            claimant_doc = UserDocument.objects.create(
+                django_id=request.user.id,
+                email=request.user.email,
+                password_hash=request.user.password,
+                first_name=request.user.first_name,
+                last_name=request.user.last_name,
+                role="beneficiary"
+            )
+        ClaimDocument.objects.create(
+            django_id=claim.id,
+            claim_id=claim.claim_id,
+            claimant_id=claimant_doc,
+            source=claim.source,
+            status=claim.status,
+            disruption_type=claim.disruption_type,
+            city=claim.city,
+            platform=claim.platform,
+            incident_date=datetime.datetime.combine(claim.incident_date, datetime.time.min),
+            incident_time=str(incident_time) if incident_time else None,
+            expected_earnings=float(claim.expected_earnings),
+            actual_earnings=float(claim.actual_earnings),
+            estimated_loss=float(claim.estimated_loss),
+            payout_amount=float(claim.payout_amount),
+            fraud_score=claim.fraud_score,
+            ai_decision_reason=claim.ai_decision_reason
+        )
+    except Exception as mongo_err:
+        print(f"⚠️ ClaimDocument creation failed in MongoDB: {mongo_err}")
 
     # Notification
     Notification.objects.create(
@@ -397,6 +483,28 @@ def review_claim(request, claim_id):
         claim.reviewed_at = timezone.now()
         claim.save()
 
+        # Update ClaimDocument in MongoDB Atlas
+        try:
+            claim_doc = ClaimDocument.objects.filter(django_id=claim.id).first()
+            if claim_doc:
+                reviewer_doc = UserDocument.objects.filter(django_id=request.user.id).first()
+                if not reviewer_doc:
+                    reviewer_doc = UserDocument.objects.create(
+                        django_id=request.user.id,
+                        email=request.user.email,
+                        password_hash=request.user.password,
+                        first_name=request.user.first_name,
+                        last_name=request.user.last_name,
+                        role="insurer"
+                    )
+                claim_doc.status = claim.status
+                claim_doc.review_note = claim.review_note
+                claim_doc.reviewed_by = reviewer_doc
+                claim_doc.reviewed_at = claim.reviewed_at
+                claim_doc.save()
+        except Exception as mongo_err:
+            print(f"⚠️ ClaimDocument update failed in MongoDB: {mongo_err}")
+
         # In-app notification for beneficiary
         notif_type = (Notification.TYPE_CLAIM_APPROVED if action == "approve"
                       else Notification.TYPE_CLAIM_REJECTED)
@@ -508,6 +616,36 @@ def create_policy(request):
         temperature_max_threshold_c=data.get("temp_max_threshold", 45.0),
         ml_claim_probability_threshold=data.get("ml_threshold", 0.65),
     )
+    # Dual write to MongoDB Atlas (Policy)
+    try:
+        insurer_doc = UserDocument.objects.filter(django_id=request.user.id).first()
+        if not insurer_doc:
+            insurer_doc = UserDocument.objects.create(
+                django_id=request.user.id,
+                email=request.user.email,
+                password_hash=request.user.password,
+                first_name=request.user.first_name,
+                last_name=request.user.last_name,
+                role="insurer"
+            )
+        PolicyDocument.objects.create(
+            django_id=policy.id,
+            name=policy.name,
+            description=policy.description,
+            insurer_id=insurer_doc,
+            max_payout_per_claim=float(policy.max_payout_per_claim),
+            payout_percentage=float(policy.payout_percentage),
+            max_claims_per_month=policy.max_claims_per_month,
+            monthly_premium=float(policy.monthly_premium),
+            rainfall_threshold_mm=policy.rainfall_threshold_mm,
+            wind_speed_threshold_kph=policy.wind_speed_threshold_kph,
+            temperature_min_threshold_c=policy.temperature_min_threshold_c,
+            temperature_max_threshold_c=policy.temperature_max_threshold_c,
+            ml_claim_probability_threshold=policy.ml_claim_probability_threshold,
+            is_active=policy.is_active
+        )
+    except Exception as mongo_err:
+        print(f"⚠️ PolicyDocument creation failed in MongoDB: {mongo_err}")
     return JsonResponse({"success": True, "policy": _policy_dict(policy)})
 
 
@@ -537,6 +675,26 @@ def update_policy(request, policy_id):
             if field in data:
                 setattr(policy, model_field, data[field])
         policy.save()
+        
+        # Dual write update to MongoDB Atlas (Policy)
+        try:
+            policy_doc = PolicyDocument.objects.filter(django_id=policy.id).first()
+            if policy_doc:
+                policy_doc.name = policy.name
+                policy_doc.description = policy.description
+                policy_doc.max_payout_per_claim = float(policy.max_payout_per_claim)
+                policy_doc.payout_percentage = float(policy.payout_percentage)
+                policy_doc.max_claims_per_month = policy.max_claims_per_month
+                policy_doc.monthly_premium = float(policy.monthly_premium)
+                policy_doc.rainfall_threshold_mm = policy.rainfall_threshold_mm
+                policy_doc.wind_speed_threshold_kph = policy.wind_speed_threshold_kph
+                policy_doc.temperature_min_threshold_c = policy.temperature_min_threshold_c
+                policy_doc.temperature_max_threshold_c = policy.temperature_max_threshold_c
+                policy_doc.ml_claim_probability_threshold = policy.ml_claim_probability_threshold
+                policy_doc.is_active = policy.is_active
+                policy_doc.save()
+        except Exception as mongo_err:
+            print(f"⚠️ PolicyDocument update failed in MongoDB: {mongo_err}")
         return JsonResponse({"success": True, "policy": _policy_dict(policy)})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
@@ -552,6 +710,12 @@ def delete_policy(request, policy_id):
     try:
         policy = Policy.objects.get(id=policy_id, insurer=request.user)
         policy.delete()
+        
+        # Dual write delete to MongoDB Atlas (Policy)
+        try:
+            PolicyDocument.objects.filter(django_id=policy_id).delete()
+        except Exception as mongo_err:
+            print(f"⚠️ PolicyDocument deletion failed in MongoDB: {mongo_err}")
         return JsonResponse({"success": True})
     except Policy.DoesNotExist:
         return JsonResponse({"error": "Not found."}, status=404)
@@ -853,6 +1017,35 @@ def simulate_disruption(request):
             status="pending",
             source="auto"
         )
+
+        # Dual write to MongoDB Atlas (Claim simulation)
+        try:
+            claimant_doc = UserDocument.objects.filter(django_id=request.user.id).first()
+            if not claimant_doc:
+                claimant_doc = UserDocument.objects.create(
+                    django_id=request.user.id,
+                    email=request.user.email,
+                    password_hash=request.user.password,
+                    first_name=request.user.first_name,
+                    last_name=request.user.last_name,
+                    role="beneficiary"
+                )
+            ClaimDocument.objects.create(
+                django_id=claim.id,
+                claim_id=claim.claim_id,
+                claimant_id=claimant_doc,
+                source=claim.source,
+                status=claim.status,
+                disruption_type=claim.disruption_type,
+                city=claim.city,
+                incident_date=datetime.datetime.combine(claim.incident_date, datetime.time.min),
+                expected_earnings=float(claim.expected_earnings),
+                actual_earnings=float(claim.actual_earnings),
+                estimated_loss=float(claim.estimated_loss),
+                payout_amount=float(claim.payout_amount)
+            )
+        except Exception as mongo_err:
+            print(f"⚠️ ClaimDocument simulation failed in MongoDB: {mongo_err}")
 
         print("✅ Claim created:", claim.id)  # 👈 add
 
