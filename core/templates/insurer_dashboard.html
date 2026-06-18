@@ -586,6 +586,8 @@ function toast(msg, type = 'success') {
 function doLogout() {
   fetch('/api/logout/', { method: 'POST', credentials: 'same-origin' });
   localStorage.removeItem('gigsure_user');
+  localStorage.removeItem('gigsure_token');
+  document.cookie = "gigsure_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; samesite=lax";
   window.location.href = '/login/';
 }
 

@@ -13,9 +13,13 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -48,9 +52,9 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'core.middleware.JWTAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
@@ -124,19 +128,31 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ── GigSure additions ───────────────────────────────────────────
 # Anthropic API key (for AI assistant)
-ANTHROPIC_API_KEY = 'your-anthropic-key-here'  # sk-ant-...
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', 'your-anthropic-key-here')
 
 # WeatherAPI.com key (free at weatherapi.com)
-WEATHER_API_KEY = 'd76f6b52979d4579b5543501260204'  # replace with yours
+WEATHER_API_KEY = os.getenv('WEATHER_API_KEY', 'd76f6b52979d4579b5543501260204')
 
 # Email backend (for claim notifications)
-# For development, print to console:
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# For production with Gmail:
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'you@gmail.com'
-# EMAIL_HOST_PASSWORD = 'your-app-password'
 DEFAULT_FROM_EMAIL = 'noreply@gigsure.in'
+
+# MongoEngine connection initialization
+import mongoengine
+
+MONGODB_URI = os.getenv(
+    'MONGODB_URI',
+    'mongodb+srv://mangaonkarmahika12_db_user:cdPJm6Ljhb1YGt1T@cluster0.mongodb.net/gigsure?retryWrites=true&w=majority'
+)
+
+try:
+    # Set timeout to avoid blocking startup if URI contains invalid hostname
+    mongoengine.connect(host=MONGODB_URI, serverSelectionTimeoutMS=2000, alias='default')
+    print("[OK] Successfully connected to MongoDB Atlas via MongoEngine")
+except Exception as e:
+    print(f"[WARNING] MongoDB Atlas connection failed, trying local fallback: {e}")
+    try:
+        mongoengine.connect('gigsure', host='mongodb://localhost:27017/gigsure', alias='default')
+        print("[OK] Connected to local MongoDB fallback")
+    except Exception as local_err:
+        print(f"[ERROR] Local MongoDB connection failed: {local_err}")

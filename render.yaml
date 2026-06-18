@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: gigsure-app
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn gigsure_project.wsgi:application --bind 0.0.0.0:$PORT"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: WEATHER_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+  - type: worker
+    name: gigsure-weather-worker
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python manage.py run_weather_monitor --loop"
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: gigsure-app
+          property: SECRET_KEY
+      - key: MONGODB_URI
+        sync: false
+      - key: WEATHER_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
